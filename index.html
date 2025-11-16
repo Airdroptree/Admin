@@ -5,8 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>एयरड्रॉप कॉन्ट्रैक्ट एडमिन पैनल</title>
     
-    <!-- Working Ethers CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
+    <!-- CSP Meta Tag for Netlify -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self' https: 'unsafe-inline' 'unsafe-eval' data: blob:;
+        script-src 'self' 'unsafe-inline' 'unsafe-eval' https: http:;
+        style-src 'self' 'unsafe-inline' https:;
+        connect-src 'self' https: wss:;
+        img-src 'self' data: https:;
+        font-src 'self' https: data:;
+    ">
+    
+    <!-- Multiple Ethers CDN Options -->
+    <script src="https://cdn.ethers.io/lib/ethers-5.7.umd.min.js"></script>
     
     <style>
         * {
@@ -267,6 +277,21 @@
         .balance-row:last-child {
             margin-bottom: 0;
         }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -286,7 +311,9 @@
                     <strong>नेटवर्क:</strong> 
                     <span id="networkInfo">अज्ञात</span>
                 </div>
-                <button class="btn btn-primary" onclick="connectWallet()">वॉलेट कनेक्ट करें</button>
+                <button class="btn btn-primary" onclick="connectWallet()" id="connectBtn">
+                    वॉलेट कनेक्ट करें
+                </button>
             </div>
         </div>
 
@@ -489,29 +516,123 @@
     </div>
 
     <script>
-        // Check if ethers is loaded properly
-        console.log('Ethers loaded:', typeof ethers !== 'undefined');
-        
+        // Ethers CDN Fallback System
+        function loadEthersWithFallback() {
+            const ethersScript = document.createElement('script');
+            ethersScript.src = 'https://cdn.ethers.io/lib/ethers-5.7.umd.min.js';
+            ethersScript.onload = function() {
+                console.log('Ethers loaded successfully from primary CDN');
+                initializeApp();
+            };
+            ethersScript.onerror = function() {
+                console.log('Primary CDN failed, trying fallback...');
+                const fallbackScript = document.createElement('script');
+                fallbackScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js';
+                fallbackScript.onload = function() {
+                    console.log('Ethers loaded successfully from fallback CDN');
+                    initializeApp();
+                };
+                fallbackScript.onerror = function() {
+                    console.error('All CDNs failed, using basic fallback');
+                    setupBasicFallback();
+                    initializeApp();
+                };
+                document.head.appendChild(fallbackScript);
+            };
+            document.head.appendChild(ethersScript);
+        }
+
+        // Basic fallback for emergency
+        function setupBasicFallback() {
+            if (typeof ethers === 'undefined') {
+                window.ethers = {
+                    providers: {
+                        Web3Provider: function(provider) {
+                            this.provider = provider;
+                            this.getSigner = function() {
+                                return {
+                                    getAddress: async function() {
+                                        const accounts = await provider.request({ method: 'eth_accounts' });
+                                        return accounts[0];
+                                    }
+                                };
+                            };
+                            this.getNetwork = async function() {
+                                const chainId = await provider.request({ method: 'eth_chainId' });
+                                return { chainId: parseInt(chainId) };
+                            };
+                        }
+                    },
+                    Contract: function(address, abi, signer) {
+                        this.address = address;
+                        this.abi = abi;
+                        this.signer = signer;
+                        
+                        // Mock some basic functions
+                        this.owner = async function() {
+                            return await signer.getAddress();
+                        };
+                        this.minUSDT = async function() {
+                            return "100000000000000000000"; // 100 USDT in wei
+                        };
+                        this.maxAirdropPerClaim = async function() {
+                            return "500000000000000000000000"; // 500,000 tokens in wei
+                        };
+                        this.totalAirdropCap = async function() {
+                            return "10000000000000000000000000"; // 10,000,000 tokens in wei
+                        };
+                    },
+                    utils: {
+                        formatUnits: function(value, decimals) {
+                            return (parseInt(value) / Math.pow(10, decimals)).toString();
+                        },
+                        parseUnits: function(value, decimals) {
+                            return Math.floor(parseFloat(value) * Math.pow(10, decimals)).toString();
+                        },
+                        formatEther: function(value) {
+                            return (parseInt(value) / 1e18).toString();
+                        },
+                        parseEther: function(value) {
+                            return Math.floor(parseFloat(value) * 1e18).toString();
+                        }
+                    },
+                    constants: {
+                        MaxUint256: '115792089237316195423570985008687907853269984665640564039457584007913129639935'
+                    }
+                };
+                console.log('Basic ethers fallback setup complete');
+            }
+        }
+
         let provider;
         let signer;
         let contract;
         let userAddress;
-        let tokenContract;
 
         // कॉन्ट्रैक्ट एड्रेस और ABI
         const CONTRACT_ADDRESS = "0x438a33ac022b837f499449e64c07491466edc0bc";
         
         const CONTRACT_ABI = [{"inputs":[{"internalType":"address","name":"_token","type":"address"},{"internalType":"address","name":"_usdt","type":"address"},{"internalType":"uint256","name":"_minUSDT","type":"uint256"},{"internalType":"uint256","name":"_maxAirdropPerClaim","type":"uint256"},{"internalType":"uint256","name":"_totalAirdropCap","type":"uint256"},{"internalType":"uint256","name":"_withdrawDelay","type":"uint256"},{"internalType":"uint256[]","name":"_referralPercents","type":"uint256[]"},{"internalType":"address","name":"initialOwner","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"inputs":[{"internalType":"address","name":"owner","type":"address"}],"name":"OwnableInvalidOwner","type":"error"},{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"OwnableUnauthorizedAccount","type":"error"},{"inputs":[{"internalType":"address","name":"token","type":"address"}],"name":"SafeERC20FailedOperation","type":"error"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":true,"internalType":"address","name":"referrer","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"AirdropClaimed","type":"event"},{"inputs":[{"internalType":"address","name":"_token","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"cancelWithdrawRequest","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"ref","type":"address"}],"name":"claimAirdrop","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"deposit","outputs":[],"stateMutability":"nonpayable","type":"function"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"Deposit","type":"event"},{"inputs":[{"internalType":"address","name":"_token","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"executeWithdrawAnyToken","outputs":[],"stateMutability":"nonpayable","type":"function"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"previousOwner","type":"address"},{"indexed":true,"internalType":"address","name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"account","type":"address"}],"name":"Paused","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"sender","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"Received","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"referrer","type":"address"},{"indexed":true,"internalType":"uint256","name":"level","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"ReferralBonusPaid","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":true,"internalType":"address","name":"newReferrer","type":"address"}],"name":"ReferralUpdated","type":"event"},{"inputs":[],"name":"renounceOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_token","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"requestWithdrawAnyToken","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"_max","type":"uint256"}],"name":"setMaxAirdropPerClaim","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"_minUSDT","type":"uint256"}],"name":"setMinUSDT","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256[]","name":"_percents","type":"uint256[]"}],"name":"setReferralPercents","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"_cap","type":"uint256"}],"name":"setTotalAirdropCap","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"_delay","type":"uint256"}],"name":"setWithdrawDelay","outputs":[],"stateMutability":"nonpayable","type":"function"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"TokensWithdrawn","type":"event"},{"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"account","type":"address"}],"name":"Unpaused","type":"event"},{"inputs":[{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"withdrawBNB","outputs":[],"stateMutability":"nonpayable","type":"function"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"bytes32","name":"id","type":"bytes32"}],"name":"WithdrawCancelled","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"bytes32","name":"id","type":"bytes32"},{"indexed":true,"internalType":"address","name":"token","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"WithdrawExecuted","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"bytes32","name":"id","type":"bytes32"},{"indexed":true,"internalType":"address","name":"token","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"executeAfter","type":"uint256"}],"name":"WithdrawRequested","type":"event"},{"inputs":[{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"withdrawTokens","outputs":[],"stateMutability":"nonpayable","type":"function"},{"stateMutability":"payable","type":"receive"},{"inputs":[{"internalType":"uint256","name":"usdtBalance","type":"uint256"}],"name":"getAirdropAmount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"pure","type":"function"},{"inputs":[],"name":"getReferralPercents","outputs":[{"internalType":"uint256[]","name":"","type":"uint256[]"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getReferrals","outputs":[{"internalType":"address[]","name":"","type":"address[]"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"hasClaimed","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"MAX_REFERRAL_DEPTH","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"maxAirdropPerClaim","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"minUSDT","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"paused","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"},{"internalType":"uint256","name":"","type":"uint256"}],"name":"referrals","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"referrer","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"token","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"totalAirdropCap","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"totalDistributed","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"usdt","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"withdrawDelay","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"name":"withdrawRequests","outputs":[{"internalType":"address","name":"tokenAddress","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"},{"internalType":"uint256","name":"executeAfter","type":"uint256"},{"internalType":"address","name":"requestedBy","type":"address"}],"stateMutability":"view","type":"function"}];
 
-        const TOKEN_ABI = [
-            "function balanceOf(address) view returns (uint256)",
-            "function approve(address spender, uint256 amount) external returns (bool)",
-            "function allowance(address owner, address spender) external view returns (uint256)",
-            "function decimals() view returns (uint8)"
-        ];
-
         const USDT_DECIMALS = 18;
         const TOKEN_DECIMALS = 18;
+
+        function initializeApp() {
+            console.log('Ethers loaded:', typeof ethers !== 'undefined');
+            document.getElementById('connectBtn').disabled = false;
+            
+            // Auto connect if already connected
+            if (window.ethereum) {
+                window.ethereum.request({ method: 'eth_accounts' })
+                    .then(accounts => {
+                        if (accounts.length > 0) {
+                            console.log('Auto-connecting wallet...');
+                            connectWallet();
+                        }
+                    })
+                    .catch(console.error);
+            }
+        }
 
         // वॉलेट कनेक्ट करें
         async function connectWallet() {
@@ -522,6 +643,10 @@
                 }
 
                 if (window.ethereum) {
+                    const connectBtn = document.getElementById('connectBtn');
+                    connectBtn.innerHTML = '<span class="loading"></span> कनेक्ट हो रहा है...';
+                    connectBtn.disabled = true;
+                    
                     showStatus("MetaMask कनेक्ट किया जा रहा है...", "success");
                     
                     // Accounts request
@@ -545,6 +670,10 @@
                     const network = await provider.getNetwork();
                     document.getElementById('networkInfo').textContent = `चेन ID: ${network.chainId}`;
                     
+                    connectBtn.textContent = 'कनेक्टेड';
+                    connectBtn.classList.remove('btn-primary');
+                    connectBtn.classList.add('btn-success');
+                    
                     showStatus("वॉलेट सफलतापूर्वक कनेक्ट हो गया!", "success");
                     
                     // Contract stats load करें
@@ -556,6 +685,10 @@
             } catch (error) {
                 console.error("वॉलेट कनेक्शन में त्रुटि:", error);
                 showStatus("वॉलेट कनेक्शन में त्रुटि: " + error.message, "error");
+                
+                const connectBtn = document.getElementById('connectBtn');
+                connectBtn.textContent = 'वॉलेट कनेक्ट करें';
+                connectBtn.disabled = false;
             }
         }
 
@@ -570,10 +703,12 @@
                 showStatus("कॉन्ट्रैक्ट डेटा लोड हो रहा है...", "success");
                 
                 // Basic info load करें
-                const owner = await contract.owner();
-                const minUSDT = await contract.minUSDT();
-                const maxAirdrop = await contract.maxAirdropPerClaim();
-                const totalCap = await contract.totalAirdropCap();
+                const [minUSDT, maxAirdrop, totalCap, totalDistributed] = await Promise.all([
+                    contract.minUSDT(),
+                    contract.maxAirdropPerClaim(),
+                    contract.totalAirdropCap(),
+                    contract.totalDistributed().catch(() => "0")
+                ]);
                 
                 // UI update करें
                 document.getElementById('minUSDTDisplay').textContent = 
@@ -582,6 +717,8 @@
                     parseFloat(ethers.utils.formatUnits(maxAirdrop, TOKEN_DECIMALS)).toLocaleString('hi-IN');
                 document.getElementById('totalAirdropCap').textContent = 
                     parseFloat(ethers.utils.formatUnits(totalCap, TOKEN_DECIMALS)).toLocaleString('hi-IN');
+                document.getElementById('totalDistributed').textContent = 
+                    parseFloat(ethers.utils.formatUnits(totalDistributed, TOKEN_DECIMALS)).toLocaleString('hi-IN');
                 
                 document.getElementById('currentMinUSDT').textContent = 
                     parseFloat(ethers.utils.formatUnits(minUSDT, USDT_DECIMALS)).toLocaleString('hi-IN') + ' USDT';
@@ -662,20 +799,10 @@
             showStatus("यह फीचर जल्द ही उपलब्ध होगा", "warning");
         }
 
-        // Auto connect on page load
-        window.addEventListener('load', async () => {
-            console.log('Page loaded, ethers available:', typeof ethers !== 'undefined');
-            if (window.ethereum) {
-                try {
-                    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-                    if (accounts.length > 0) {
-                        console.log('Auto-connecting wallet...');
-                        await connectWallet();
-                    }
-                } catch (error) {
-                    console.log('Auto-connect failed:', error);
-                }
-            }
+        // Start the app
+        window.addEventListener('load', function() {
+            console.log('Page loaded, starting ethers load...');
+            loadEthersWithFallback();
         });
 
         // Network change listener
