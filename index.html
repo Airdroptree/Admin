@@ -5,12 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>एयरड्रॉप कॉन्ट्रैक्ट एडमिन पैनल</title>
     
-    <!-- Local ethers library embedded -->
-    <script>
-    // Ethers.js v5.7.2 - Embedded locally to avoid CDN issues
-    !function(e){"object"==typeof exports?module.exports=e():"function"==typeof define&&define.amd?define(e):"undefined"!=typeof window?window.ethers=e():"undefined"!=typeof global?global.ethers=e():"undefined"!=typeof self&&(self.ethers=e())}(function(){var e;return function t(r,n){function o(i,a){if(!n[i]){if(!r[i]){var u="function"==typeof require&&require;if(!a&&u)return u(i,!0);if(s)return s(i,!0);var l=new Error("Cannot find module '"+i+"'");throw l.code="MODULE_NOT_FOUND",l}var c=n[i]={exports:{}};r[i][0].call(c.exports,function(e){return o(r[i][1][e]||e)},c,c.exports,t,r,n)}return n[i].exports}for(var s="function"==typeof require&&require,i=0;i<r.length;i++)o(r[i]);return o}({1:[function(e,t,r){"use strict";var n=this&&this.__extends||function(){var e=Object.setPrototypeOf||{__proto__:[]}instanceof Array&&function(e,t){e.__proto__=t}||function(e,t){for(var r in t)t.hasOwnProperty(r)&&(e[r]=t[r])};return function(t,r){function n(){this.constructor=t}e(t,r),t.prototype=null===r?Object.create(r):(n.prototype=r.prototype,new n)}}(),o=this&&this.__awaiter||function(e,t,r,n){return new(r||(r=Promise))(function(o,s){function i(e){try{u(n.next(e))}catch(e){s(e)}}function a(e){try{u(n.throw(e))}catch(e){s(e)}}function u(e){e.done?o(e.value):new r(function(t){t(e.value)}).then(i,a)}u((n=n.apply(e,t||[])).next())})},s=this&&this.__generator||function(e,t){var r,n,o,s,i={label:0,sent:function(){if(1&o[0])throw o[1];return o[1]},trys:[],ops:[]};return i.next=function(e){return{value:e,done:!1}},i.throw=function(e){if(1&o[0])throw e;throw e},i.return=function(e){return{value:e,done:!0}},i},i=this&&this.__importDefault||function(e){return e&&e.__esModule?e:{default:e}};Object.defineProperty(r,"__esModule",{value:!0});var a=i(e("./errors")),u=e("./utils")},{}]},{},[1])(1)});
-    </script>
-
+    <!-- Working Ethers CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/ethers@5.7.2/dist/ethers.min.js"></script>
+    
     <style>
         * {
             margin: 0;
@@ -491,49 +488,10 @@
         <div id="statusMessage" class="status"></div>
     </div>
 
-    <!-- Simple Ethers Implementation -->
     <script>
-        // Simple ethers implementation for basic functionality
-        if (typeof ethers === 'undefined') {
-            console.log('Using fallback ethers implementation');
-            window.ethers = {
-                providers: {
-                    Web3Provider: function(provider) {
-                        this.provider = provider;
-                        this.getSigner = function() {
-                            return {
-                                getAddress: function() {
-                                    return window.ethereum.selectedAddress;
-                                }
-                            };
-                        };
-                    }
-                },
-                Contract: function(address, abi, signer) {
-                    this.address = address;
-                    this.abi = abi;
-                    this.signer = signer;
-                },
-                utils: {
-                    formatUnits: function(value, decimals) {
-                        return (value / Math.pow(10, decimals)).toString();
-                    },
-                    parseUnits: function(value, decimals) {
-                        return Math.floor(value * Math.pow(10, decimals));
-                    },
-                    formatEther: function(value) {
-                        return (value / 1e18).toString();
-                    },
-                    parseEther: function(value) {
-                        return Math.floor(value * 1e18);
-                    }
-                },
-                constants: {
-                    MaxUint256: '115792089237316195423570985008687907853269984665640564039457584007913129639935'
-                }
-            };
-        }
-
+        // Check if ethers is loaded properly
+        console.log('Ethers loaded:', typeof ethers !== 'undefined');
+        
         let provider;
         let signer;
         let contract;
@@ -555,24 +513,42 @@
         const USDT_DECIMALS = 18;
         const TOKEN_DECIMALS = 18;
 
+        // वॉलेट कनेक्ट करें
         async function connectWallet() {
             try {
+                if (typeof ethers === 'undefined') {
+                    showStatus("Ethers library लोड नहीं हो पाई। पेज refresh करें।", "error");
+                    return;
+                }
+
                 if (window.ethereum) {
                     showStatus("MetaMask कनेक्ट किया जा रहा है...", "success");
-                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    
+                    // Accounts request
+                    const accounts = await window.ethereum.request({ 
+                        method: 'eth_requestAccounts' 
+                    });
+                    
+                    // Provider create करें
                     provider = new ethers.providers.Web3Provider(window.ethereum);
                     signer = provider.getSigner();
                     userAddress = await signer.getAddress();
                     
+                    // Contract instance create करें
                     contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
                     
+                    // UI update करें
                     document.getElementById('walletAddress').textContent = 
                         userAddress.substring(0, 6) + '...' + userAddress.substring(38);
                     
+                    // Network info
                     const network = await provider.getNetwork();
                     document.getElementById('networkInfo').textContent = `चेन ID: ${network.chainId}`;
                     
                     showStatus("वॉलेट सफलतापूर्वक कनेक्ट हो गया!", "success");
+                    
+                    // Contract stats load करें
+                    await loadContractStats();
                     
                 } else {
                     showStatus("MetaMask इंस्टॉल नहीं है!", "error");
@@ -583,6 +559,46 @@
             }
         }
 
+        // कॉन्ट्रैक्ट स्टेटस लोड करें
+        async function loadContractStats() {
+            if (!contract) {
+                showStatus("पहले वॉलेट कनेक्ट करें!", "error");
+                return;
+            }
+
+            try {
+                showStatus("कॉन्ट्रैक्ट डेटा लोड हो रहा है...", "success");
+                
+                // Basic info load करें
+                const owner = await contract.owner();
+                const minUSDT = await contract.minUSDT();
+                const maxAirdrop = await contract.maxAirdropPerClaim();
+                const totalCap = await contract.totalAirdropCap();
+                
+                // UI update करें
+                document.getElementById('minUSDTDisplay').textContent = 
+                    parseFloat(ethers.utils.formatUnits(minUSDT, USDT_DECIMALS)).toLocaleString('hi-IN');
+                document.getElementById('maxAirdropDisplay').textContent = 
+                    parseFloat(ethers.utils.formatUnits(maxAirdrop, TOKEN_DECIMALS)).toLocaleString('hi-IN');
+                document.getElementById('totalAirdropCap').textContent = 
+                    parseFloat(ethers.utils.formatUnits(totalCap, TOKEN_DECIMALS)).toLocaleString('hi-IN');
+                
+                document.getElementById('currentMinUSDT').textContent = 
+                    parseFloat(ethers.utils.formatUnits(minUSDT, USDT_DECIMALS)).toLocaleString('hi-IN') + ' USDT';
+                document.getElementById('currentMaxAirdrop').textContent = 
+                    parseFloat(ethers.utils.formatUnits(maxAirdrop, TOKEN_DECIMALS)).toLocaleString('hi-IN') + ' टोकन';
+                document.getElementById('currentTotalCap').textContent = 
+                    parseFloat(ethers.utils.formatUnits(totalCap, TOKEN_DECIMALS)).toLocaleString('hi-IN') + ' टोकन';
+
+                showStatus("कॉन्ट्रैक्ट डेटा सफलतापूर्वक लोड हो गया!", "success");
+                
+            } catch (error) {
+                console.error("स्टेटस लोड करने में त्रुटि:", error);
+                showStatus("स्टेटस लोड करने में त्रुटि: " + error.message, "error");
+            }
+        }
+
+        // स्टेटस मैसेज दिखाएं
         function showStatus(message, type) {
             const statusDiv = document.getElementById('statusMessage');
             statusDiv.textContent = message;
@@ -593,42 +609,87 @@
             }, 5000);
         }
 
-        // Other functions will be added as needed
-        async function loadContractStats() {
-            showStatus("यह फीचर अभी उपलब्ध नहीं है", "warning");
-        }
-
+        // Placeholder functions for other features
         async function depositTokens() {
-            showStatus("यह फीचर अभी उपलब्ध नहीं है", "warning");
+            showStatus("यह फीचर जल्द ही उपलब्ध होगा", "warning");
         }
 
         async function approveTokens() {
-            showStatus("यह फीचर अभी उपलब्ध नहीं है", "warning");
+            showStatus("यह फीचर जल्द ही उपलब्ध होगा", "warning");
         }
 
-        // Add other function stubs
-        async function setMinUSDT() { showStatus("यह फीचर अभी उपलब्ध नहीं है", "warning"); }
-        async function setMaxAirdropPerClaim() { showStatus("यह फीचर अभी उपलब्ध नहीं है", "warning"); }
-        async function setTotalAirdropCap() { showStatus("यह फीचर अभी उपलब्ध नहीं है", "warning"); }
-        async function setWithdrawDelay() { showStatus("यह फीचर अभी उपलब्ध नहीं है", "warning"); }
-        async function setReferralPercents() { showStatus("यह फीचर अभी उपलब्ध नहीं है", "warning"); }
-        async function withdrawTokens() { showStatus("यह फीचर अभी उपलब्ध नहीं है", "warning"); }
-        async function requestWithdrawAnyToken() { showStatus("यह फीचर अभी उपलब्ध नहीं है", "warning"); }
-        async function executeWithdrawAnyToken() { showStatus("यह फीचर अभी उपलब्ध नहीं है", "warning"); }
-        async function withdrawBNB() { showStatus("यह फीचर अभी उपलब्ध नहीं है", "warning"); }
-        async function pauseContract() { showStatus("यह फीचर अभी उपलब्ध नहीं है", "warning"); }
-        async function unpauseContract() { showStatus("यह फीचर अभी उपलब्ध नहीं है", "warning"); }
+        async function setMinUSDT() {
+            showStatus("यह फीचर जल्द ही उपलब्ध होगा", "warning");
+        }
+
+        async function setMaxAirdropPerClaim() {
+            showStatus("यह फीचर जल्द ही उपलब्ध होगा", "warning");
+        }
+
+        async function setTotalAirdropCap() {
+            showStatus("यह फीचर जल्द ही उपलब्ध होगा", "warning");
+        }
+
+        async function setWithdrawDelay() {
+            showStatus("यह फीचर जल्द ही उपलब्ध होगा", "warning");
+        }
+
+        async function setReferralPercents() {
+            showStatus("यह फीचर जल्द ही उपलब्ध होगा", "warning");
+        }
+
+        async function withdrawTokens() {
+            showStatus("यह फीचर जल्द ही उपलब्ध होगा", "warning");
+        }
+
+        async function requestWithdrawAnyToken() {
+            showStatus("यह फीचर जल्द ही उपलब्ध होगा", "warning");
+        }
+
+        async function executeWithdrawAnyToken() {
+            showStatus("यह फीचर जल्द ही उपलब्ध होगा", "warning");
+        }
+
+        async function withdrawBNB() {
+            showStatus("यह फीचर जल्द ही उपलब्ध होगा", "warning");
+        }
+
+        async function pauseContract() {
+            showStatus("यह फीचर जल्द ही उपलब्ध होगा", "warning");
+        }
+
+        async function unpauseContract() {
+            showStatus("यह फीचर जल्द ही उपलब्ध होगा", "warning");
+        }
 
         // Auto connect on page load
         window.addEventListener('load', async () => {
             console.log('Page loaded, ethers available:', typeof ethers !== 'undefined');
             if (window.ethereum) {
-                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-                if (accounts.length > 0) {
-                    await connectWallet();
+                try {
+                    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                    if (accounts.length > 0) {
+                        console.log('Auto-connecting wallet...');
+                        await connectWallet();
+                    }
+                } catch (error) {
+                    console.log('Auto-connect failed:', error);
                 }
             }
         });
+
+        // Network change listener
+        if (window.ethereum) {
+            window.ethereum.on('chainChanged', (chainId) => {
+                console.log('Network changed:', chainId);
+                window.location.reload();
+            });
+
+            window.ethereum.on('accountsChanged', (accounts) => {
+                console.log('Account changed:', accounts);
+                window.location.reload();
+            });
+        }
     </script>
 </body>
 </html>
