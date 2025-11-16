@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>एयरड्रॉप कॉन्ट्रैक्ट एडमिन पैनल</title>
+    <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js" type="application/javascript"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+        }
+
+        .wallet-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .wallet-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #219a52;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+
+        .btn-warning {
+            background: #f39c12;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #d35400;
+            transform: translateY(-2px);
+        }
+
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn-info:hover {
+            background: #138496;
+            transform: translateY(-2px);
+        }
+
+        .content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 25px;
+        }
+
+        @media (max-width: 768px) {
+            .content {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #e1e8ed;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .card h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #34495e;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #bdc3c7;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+            display: block;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            display: block;
+        }
+
+        .info-box {
+            background: #e8f4fd;
+            border: 1px solid #b3d9ff;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+        .info-box h4 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border-left: 4px solid #3498db;
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+
+        .decimals-info {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 5px;
+            padding: 8px;
+            margin-top: 5px;
+            font-size: 0.8em;
+            color: #856404;
+        }
+
+        .current-value {
+            background: #e8f5e8;
+            border: 1px solid #c8e6c9;
+            border-radius: 5px;
+            padding: 8px;
+            margin-top: 5px;
+            font-size: 0.8em;
+            color: #2e7d32;
+        }
+
+        .balance-info {
+            background: #e3f2fd;
+            border: 1px solid #90caf9;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .balance-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .balance-row:last-child {
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>एयरड्रॉप कॉन्ट्रैक्ट एडमिन पैनल</h1>
+            <p>BSC USDT (18 Decimals) के लिए ऑप्टिमाइज्ड</p>
+        </div>
+
+        <div class="wallet-section">
+            <div class="wallet-info">
+                <div>
+                    <strong>वॉलेट पता:</strong> 
+                    <span id="walletAddress">कनेक्ट नहीं किया गया</span>
+                </div>
+                <div>
+                    <strong>नेटवर्क:</strong> 
+                    <span id="networkInfo">अज्ञात</span>
+                </div>
+                <button class="btn btn-primary" onclick="connectWallet()">वॉलेट कनेक्ट करें</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- बाएं कॉलम -->
+            <div class="left-column">
+                <!-- कॉन्ट्रैक्ट स्टेटस -->
+                <div class="card">
+                    <h3>कॉन्ट्रैक्ट स्टेटस</h3>
+                    <div class="balance-info">
+                        <div class="balance-row">
+                            <span>कॉन्ट्रैक्ट टोकन बैलेंस:</span>
+                            <strong id="contractBalance">0</strong>
+                        </div>
+                        <div class="balance-row">
+                            <span>आपका टोकन बैलेंस:</span>
+                            <strong id="userTokenBalance">0</strong>
+                        </div>
+                        <div class="balance-row">
+                            <span>कॉन्ट्रैक्ट BNB बैलेंस:</span>
+                            <strong id="contractBNBBalance">0</strong>
+                        </div>
+                    </div>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <div class="stat-value" id="totalDistributed">0</div>
+                            <div class="stat-label">कुल वितरित टोकन</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="totalAirdropCap">0</div>
+                            <div class="stat-label">कुल कैप</div>
+                        </div>
+                    </div>
+                    <div class="stats">
+                        <div class="stat-item">
+                            <div class="stat-value" id="minUSDTDisplay">0</div>
+                            <div class="stat-label">न्यूनतम USDT</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="maxAirdropDisplay">0</div>
+                            <div class="stat-label">मैक्स एयरड्रॉप</div>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="loadContractStats()" style="width: 100%;">
+                        स्टेटस अपडेट करें
+                    </button>
+                </div>
+
+                <!-- डिपॉजिट सेक्शन -->
+                <div class="card">
+                    <h3>टोकन डिपॉजिट</h3>
+                    
+                    <div class="form-group">
+                        <label>डिपॉजिट राशि (टोकन):</label>
+                        <input type="number" id="depositAmount" class="form-control" placeholder="1000" step="0.001">
+                        <div class="decimals-info">टोकन decimals: 18</div>
+                        <button class="btn btn-info" onclick="depositTokens()" style="margin-top: 10px; width: 100%;">
+                            टोकन डिपॉजिट करें
+                        </button>
+                    </div>
+
+                    <div class="info-box">
+                        <h4>डिपॉजिट नोट्स</h4>
+                        <ul style="padding-left: 20px; margin: 10px 0;">
+                            <li>डिपॉजिट करने से पहले टोकन की approval दें</li>
+                            <li>कॉन्ट्रैक्ट को टोकन ट्रांसफर करने की अनुमति देनी होगी</li>
+                            <li>डिपॉजिट successful होने पर एयरड्रॉप उपलब्ध होगा</li>
+                        </ul>
+                        <button class="btn btn-warning" onclick="approveTokens()" style="width: 100%; margin-top: 10px;">
+                            टोकन Approve करें
+                        </button>
+                    </div>
+                </div>
+
+                <!-- कॉन्फ़िगरेशन सेटिंग्स -->
+                <div class="card">
+                    <h3>कॉन्फ़िगरेशन सेटिंग्स</h3>
+                    
+                    <div class="form-group">
+                        <label>न्यूनतम USDT (BSC - 18 Decimals):</label>
+                        <input type="number" id="minUSDT" class="form-control" placeholder="100" step="0.01">
+                        <div class="decimals-info">BSC USDT: 18 decimals</div>
+                        <div class="current-value">वर्तमान: <span id="currentMinUSDT">0</span> USDT</div>
+                        <button class="btn btn-success" onclick="setMinUSDT()" style="margin-top: 10px; width: 100%;">
+                            सेट करें
+                        </button>
+                    </div>
+
+                    <div class="form-group">
+                        <label>मैक्सिमम एयरड्रॉप प्रति क्लेम (टोकन):</label>
+                        <input type="number" id="maxAirdropPerClaim" class="form-control" placeholder="500000" step="1">
+                        <div class="current-value">वर्तमान: <span id="currentMaxAirdrop">0</span> टोकन</div>
+                        <button class="btn btn-success" onclick="setMaxAirdropPerClaim()" style="margin-top: 10px; width: 100%;">
+                            सेट करें
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- दाएं कॉलम -->
+            <div class="right-column">
+                <!-- अतिरिक्त सेटिंग्स -->
+                <div class="card">
+                    <h3>अतिरिक्त सेटिंग्स</h3>
+                    
+                    <div class="form-group">
+                        <label>कुल एयरड्रॉप कैप (टोकन):</label>
+                        <input type="number" id="totalAirdropCap" class="form-control" placeholder="10000000" step="1">
+                        <div class="current-value">वर्तमान: <span id="currentTotalCap">0</span> टोकन</div>
+                        <button class="btn btn-success" onclick="setTotalAirdropCap()" style="margin-top: 10px; width: 100%;">
+                            सेट करें
+                        </button>
+                    </div>
+
+                    <div class="form-group">
+                        <label>विथड्रॉल डिले (दिनों में):</label>
+                        <input type="number" id="withdrawDelay" class="form-control" placeholder="7" step="1">
+                        <div class="current-value">वर्तमान: <span id="currentWithdrawDelay">0</span> सेकंड</div>
+                        <button class="btn btn-success" onclick="setWithdrawDelay()" style="margin-top: 10px; width: 100%;">
+                            सेट करें
+                        </button>
+                    </div>
+
+                    <div class="form-group">
+                        <label>रेफरल परसेंटेज (कॉमा से अलग करें):</label>
+                        <input type="text" id="referralPercents" class="form-control" placeholder="10,5,3,2,1" value="10,5,3,2,1">
+                        <small>उदाहरण: 10,5,3,2,1 (लेवल 1-5 के लिए)</small>
+                        <div class="current-value">वर्तमान: <span id="currentReferralPercents">लोड हो रहा है...</span></div>
+                        <button class="btn btn-success" onclick="setReferralPercents()" style="margin-top: 10px; width: 100%;">
+                            सेट करें
+                        </button>
+                    </div>
+                </div>
+
+                <!-- टोकन निकासी -->
+                <div class="card">
+                    <h3>टोकन निकासी</h3>
+                    
+                    <div class="form-group">
+                        <label>टोकन राशि:</label>
+                        <input type="number" id="withdrawAmount" class="form-control" placeholder="1000" step="0.001">
+                        <button class="btn btn-danger" onclick="withdrawTokens()" style="margin-top: 10px; width: 100%;">
+                            टोकन निकालें
+                        </button>
+                    </div>
+
+                    <div class="info-box">
+                        <h4>टाइमलॉक विथड्रॉल (अन्य टोकन्स)</h4>
+                        
+                        <div class="form-group">
+                            <label>टोकन पता:</label>
+                            <input type="text" id="anyTokenAddress" class="form-control" placeholder="0x...">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>राशि:</label>
+                            <input type="number" id="anyTokenAmount" class="form-control" placeholder="राशि" step="0.001">
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <button class="btn btn-warning" onclick="requestWithdrawAnyToken()">
+                                रिक्वेस्ट करें
+                            </button>
+                            <button class="btn btn-danger" onclick="executeWithdrawAnyToken()">
+                                एक्जीक्यूट करें
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BNB निकासी और कंट्रोल -->
+                <div class="card">
+                    <h3>BNB निकासी & कंट्रोल</h3>
+                    
+                    <div class="form-group">
+                        <label>BNB राशि:</label>
+                        <input type="number" id="bnbWithdrawAmount" class="form-control" placeholder="1.5" step="0.001">
+                        <button class="btn btn-danger" onclick="withdrawBNB()" style="margin-top: 10px; width: 100%;">
+                            BNB निकालें
+                        </button>
+                    </div>
+
+                    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
+                        <h4>कॉन्ट्रैक्ट नियंत्रण</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
+                            <button class="btn btn-warning" onclick="pauseContract()">
+                                पॉज करें
+                            </button>
+                            <button class="btn btn-success" onclick="unpauseContract()">
+                                अनपॉज करें
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- स्टेटस मैसेज -->
+        <div id="statusMessage" class="status"></div>
+    </div>
+
+    <script>
+        let provider;
+        let signer;
+        let contract;
+        let userAddress;
+        let tokenContract;
+
+        // कॉन्ट्रैक्ट एड्रेस और ABI
+        const CONTRACT_ADDRESS = "0x438a33ac022b837f499449e64c07491466edc0bc";
+        
+        // आपका ABI
+        const CONTRACT_ABI = [{"inputs":[{"internalType":"address","name":"_token","type":"address"},{"internalType":"address","name":"_usdt","type":"address"},{"internalType":"uint256","name":"_minUSDT","type":"uint256"},{"internalType":"uint256","name":"_maxAirdropPerClaim","type":"uint256"},{"internalType":"uint256","name":"_totalAirdropCap","type":"uint256"},{"internalType":"uint256","name":"_withdrawDelay","type":"uint256"},{"internalType":"uint256[]","name":"_referralPercents","type":"uint256[]"},{"internalType":"address","name":"initialOwner","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"inputs":[{"internalType":"address","name":"owner","type":"address"}],"name":"OwnableInvalidOwner","type":"error"},{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"OwnableUnauthorizedAccount","type":"error"},{"inputs":[{"internalType":"address","name":"token","type":"address"}],"name":"SafeERC20FailedOperation","type":"error"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":true,"internalType":"address","name":"referrer","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"AirdropClaimed","type":"event"},{"inputs":[{"internalType":"address","name":"_token","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"cancelWithdrawRequest","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"ref","type":"address"}],"name":"claimAirdrop","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"deposit","outputs":[],"stateMutability":"nonpayable","type":"function"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"Deposit","type":"event"},{"inputs":[{"internalType":"address","name":"_token","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"executeWithdrawAnyToken","outputs":[],"stateMutability":"nonpayable","type":"function"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"previousOwner","type":"address"},{"indexed":true,"internalType":"address","name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"account","type":"address"}],"name":"Paused","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"sender","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"Received","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"referrer","type":"address"},{"indexed":true,"internalType":"uint256","name":"level","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"ReferralBonusPaid","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"user","type":"address"},{"indexed":true,"internalType":"address","name":"newReferrer","type":"address"}],"name":"ReferralUpdated","type":"event"},{"inputs":[],"name":"renounceOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"_token","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"requestWithdrawAnyToken","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"_max","type":"uint256"}],"name":"setMaxAirdropPerClaim","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"_minUSDT","type":"uint256"}],"name":"setMinUSDT","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256[]","name":"_percents","type":"uint256[]"}],"name":"setReferralPercents","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"_cap","type":"uint256"}],"name":"setTotalAirdropCap","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"_delay","type":"uint256"}],"name":"setWithdrawDelay","outputs":[],"stateMutability":"nonpayable","type":"function"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"TokensWithdrawn","type":"event"},{"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"account","type":"address"}],"name":"Unpaused","type":"event"},{"inputs":[{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"withdrawBNB","outputs":[],"stateMutability":"nonpayable","type":"function"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"bytes32","name":"id","type":"bytes32"}],"name":"WithdrawCancelled","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"bytes32","name":"id","type":"bytes32"},{"indexed":true,"internalType":"address","name":"token","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"}],"name":"WithdrawExecuted","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"bytes32","name":"id","type":"bytes32"},{"indexed":true,"internalType":"address","name":"token","type":"address"},{"indexed":false,"internalType":"uint256","name":"amount","type":"uint256"},{"indexed":false,"internalType":"uint256","name":"executeAfter","type":"uint256"}],"name":"WithdrawRequested","type":"event"},{"inputs":[{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"withdrawTokens","outputs":[],"stateMutability":"nonpayable","type":"function"},{"stateMutability":"payable","type":"receive"},{"inputs":[{"internalType":"uint256","name":"usdtBalance","type":"uint256"}],"name":"getAirdropAmount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"pure","type":"function"},{"inputs":[],"name":"getReferralPercents","outputs":[{"internalType":"uint256[]","name":"","type":"uint256[]"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getReferrals","outputs":[{"internalType":"address[]","name":"","type":"address[]"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"hasClaimed","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"MAX_REFERRAL_DEPTH","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"maxAirdropPerClaim","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"minUSDT","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"paused","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"},{"internalType":"uint256","name":"","type":"uint256"}],"name":"referrals","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"referrer","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"token","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"totalAirdropCap","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"totalDistributed","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"usdt","outputs":[{"internalType":"contract IERC20","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"withdrawDelay","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"name":"withdrawRequests","outputs":[{"internalType":"address","name":"tokenAddress","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"},{"internalType":"uint256","name":"executeAfter","type":"uint256"},{"internalType":"address","name":"requestedBy","type":"address"}],"stateMutability":"view","type":"function"}];
+
+        // Token ABI (approve और balanceOf के लिए)
+        const TOKEN_ABI = [
+            "function balanceOf(address) view returns (uint256)",
+            "function approve(address spender, uint256 amount) external returns (bool)",
+            "function allowance(address owner, address spender) external view returns (uint256)",
+            "function decimals() view returns (uint8)"
+        ];
+
+        // Decimals (BSC USDT और टोकन दोनों के 18 decimals)
+        const USDT_DECIMALS = 18;
+        const TOKEN_DECIMALS = 18;
+
+        // वॉलेट कनेक्ट करें
+        async function connectWallet() {
+            try {
+                if (window.ethereum) {
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+                    provider = new ethers.providers.Web3Provider(window.ethereum);
+                    signer = provider.getSigner();
+                    userAddress = await signer.getAddress();
+                    
+                    contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+                    
+                    // ओनरशिप चेक करें
+                    const owner = await contract.owner();
+                    if (owner.toLowerCase() !== userAddress.toLowerCase()) {
+                        showStatus("आप कॉन्ट्रैक्ट के ओनर नहीं हैं!", "error");
+                        return;
+                    }
+                    
+                    document.getElementById('walletAddress').textContent = 
+                        userAddress.substring(0, 6) + '...' + userAddress.substring(38);
+                    
+                    // नेटवर्क इन्फो
+                    const network = await provider.getNetwork();
+                    document.getElementById('networkInfo').textContent = `चेन ID: ${network.chainId}`;
+                    
+                    showStatus("वॉलेट सफलतापूर्वक कनेक्ट हो गया!", "success");
+                    await loadContractStats();
+                    
+                } else {
+                    showStatus("MetaMask इंस्टॉल नहीं है!", "error");
+                }
+            } catch (error) {
+                console.error("वॉलेट कनेक्शन में त्रुटि:", error);
+                showStatus("वॉलेट कनेक्शन में त्रुटि: " + error.message, "error");
+            }
+        }
+
+        // कॉन्ट्रैक्ट स्टेटस लोड करें
+        async function loadContractStats() {
+            if (!contract) {
+                showStatus("पहले वॉलेट कनेक्ट करें!", "error");
+                return;
+            }
+
+            try {
+                // टोकन कॉन्ट्रैक्ट इनिशियलाइज़ करें
+                const tokenAddress = await contract.token();
+                tokenContract = new ethers.Contract(tokenAddress, TOKEN_ABI, signer);
+
+                const [
+                    totalDistributed,
+                    totalAirdropCap,
+                    minUSDT,
+                    maxAirdropPerClaim,
+                    withdrawDelay,
+                    referralPercents,
+                    contractBalance,
+                    contractBNBBalance
+                ] = await Promise.all([
+                    contract.totalDistributed(),
+                    contract.totalAirdropCap(),
+                    contract.minUSDT(),
+                    contract.maxAirdropPerClaim(),
+                    contract.withdrawDelay(),
+                    contract.getReferralPercents(),
+                    tokenContract.balanceOf(CONTRACT_ADDRESS),
+                    provider.getBalance(CONTRACT_ADDRESS)
+                ]);
+
+                // यूजर का टोकन बैलेंस
+                const userTokenBalance = await tokenContract.balanceOf(userAddress);
+
+                // टोकन वैल्यू को readable format में बदलें
+                document.getElementById('totalDistributed').textContent = 
+                    parseFloat(ethers.utils.formatUnits(totalDistributed, TOKEN_DECIMALS)).toLocaleString('hi-IN');
+                document.getElementById('totalAirdropCap').textContent = 
+                    parseFloat(ethers.utils.formatUnits(totalAirdropCap, TOKEN_DECIMALS)).toLocaleString('hi-IN');
+                document.getElementById('contractBalance').textContent = 
+                    parseFloat(ethers.utils.formatUnits(contractBalance, TOKEN_DECIMALS)).toLocaleString('hi-IN') + ' टोकन';
+                document.getElementById('userTokenBalance').textContent = 
+                    parseFloat(ethers.utils.formatUnits(userTokenBalance, TOKEN_DECIMALS)).toLocaleString('hi-IN') + ' टोकन';
+                document.getElementById('contractBNBBalance').textContent = 
+                    parseFloat(ethers.utils.formatEther(contractBNBBalance)).toLocaleString('hi-IN') + ' BNB';
+                
+                document.getElementById('minUSDTDisplay').textContent = 
+                    parseFloat(ethers.utils.formatUnits(minUSDT, USDT_DECIMALS)).toLocaleString('hi-IN');
+                document.getElementById('maxAirdropDisplay').textContent = 
+                    parseFloat(ethers.utils.formatUnits(maxAirdropPerClaim, TOKEN_DECIMALS)).toLocaleString('hi-IN');
+
+                // करंट वैल्यू इनपुट में सेट करें
+                document.getElementById('minUSDT').value = ethers.utils.formatUnits(minUSDT, USDT_DECIMALS);
+                document.getElementById('maxAirdropPerClaim').value = ethers.utils.formatUnits(maxAirdropPerClaim, TOKEN_DECIMALS);
+                document.getElementById('totalAirdropCap').value = ethers.utils.formatUnits(totalAirdropCap, TOKEN_DECIMALS);
+                document.getElementById('withdrawDelay').value = Math.floor(withdrawDelay / (24 * 60 * 60));
+
+                // करंट वैल्यू display
+                document.getElementById('currentMinUSDT').textContent = 
+                    parseFloat(ethers.utils.formatUnits(minUSDT, USDT_DECIMALS)).toLocaleString('hi-IN') + ' USDT';
+                document.getElementById('currentMaxAirdrop').textContent = 
+                    parseFloat(ethers.utils.formatUnits(maxAirdropPerClaim, TOKEN_DECIMALS)).toLocaleString('hi-IN') + ' टोकन';
+                document.getElementById('currentTotalCap').textContent = 
+                    parseFloat(ethers.utils.formatUnits(totalAirdropCap, TOKEN_DECIMALS)).toLocaleString('hi-IN') + ' टोकन';
+                document.getElementById('currentWithdrawDelay').textContent = 
+                    withdrawDelay.toString() + ' सेकंड (' + Math.floor(withdrawDelay / (24 * 60 * 60)) + ' दिन)';
+                document.getElementById('currentReferralPercents').textContent = 
+                    referralPercents.map(p => p.toString() + '%').join(', ');
+
+            } catch (error) {
+                console.error("स्टेटस लोड करने में त्रुटि:", error);
+                showStatus("स्टेटस लोड करने में त्रुटि: " + error.message, "error");
+            }
+        }
+
+        // डिपॉजिट फंक्शन
+        async function depositTokens() {
+            const amount = document.getElementById('depositAmount').value;
+            if (!amount || amount <= 0) {
+                showStatus("कृपया वैलिड राशि दर्ज करें!", "error");
+                return;
+            }
+
+            try {
+                const amountInWei = ethers.utils.parseUnits(amount, TOKEN_DECIMALS);
+                
+                // पहले allowance check करें
+                const allowance = await tokenContract.allowance(userAddress, CONTRACT_ADDRESS);
+                
+                if (allowance.lt(amountInWei)) {
+                    showStatus("पहले टोकन approve करें! Allowance insufficient.", "error");
+                    return;
+                }
+
+                const tx = await contract.deposit(amountInWei);
+                showStatus("डिपॉजिट ट्रांजैक्शन भेजा गया...", "success");
+                await tx.wait();
+                showStatus("टोकन सफलतापूर्वक डिपॉजिट हो गए!", "success");
+                await loadContractStats();
+                
+            } catch (error) {
+                console.error("डिपॉजिट में त्रुटि:", error);
+                showStatus("डिपॉजिट में त्रुटि: " + error.message, "error");
+            }
+        }
+
+        // टोकन approve करें
+        async function approveTokens() {
+            const amount = document.getElementById('depositAmount').value;
+            if (!amount || amount <= 0) {
+                showStatus("कृपया डिपॉजिट राशि पहले दर्ज करें!", "error");
+                return;
+            }
+
+            try {
+                const amountInWei = ethers.utils.parseUnits(amount, TOKEN_DECIMALS);
+                
+                // बड़ी amount approve करने के लिए (पूरा बैलेंस)
+                const bigAmount = ethers.constants.MaxUint256;
+                
+                const tx = await tokenContract.approve(CONTRACT_ADDRESS, bigAmount);
+                showStatus("Approve ट्रांजैक्शन भेजा गया...", "success");
+                await tx.wait();
+                showStatus("टोकन सफलतापूर्वक approve हो गए!", "success");
+                
+            } catch (error) {
+                console.error("Approve में त्रुटि:", error);
+                showStatus("Approve में त्रुटि: " + error.message, "error");
+            }
+        }
+
+        // सेटिंग्स फंक्शन्स (18 decimals के लिए)
+        async function setMinUSDT() {
+            const value = document.getElementById('minUSDT').value;
+            if (!value) {
+                showStatus("कृपया मान दर्ज करें!", "error");
+                return;
+            }
+
+            try {
+                const valueInWei = ethers.utils.parseUnits(value, USDT_DECIMALS);
+                const tx = await contract.setMinUSDT(valueInWei);
+                showStatus("ट्रांजैक्शन भेजा गया...", "success");
+                await tx.wait();
+                showStatus("न्यूनतम USDT सफलतापूर्वक अपडेट हो गया!", "success");
+                await loadContractStats();
+            } catch (error) {
+                showStatus("त्रुटि: " + error.message, "error");
+            }
+        }
+
+        async function setMaxAirdropPerClaim() {
+            const value = document.getElementById('maxAirdropPerClaim').value;
+            if (!value) {
+                showStatus("कृपया मान दर्ज करें!", "error");
+                return;
+            }
+
+            try {
+                const valueInWei = ethers.utils.parseUnits(value, TOKEN_DECIMALS);
+                const tx = await contract.setMaxAirdropPerClaim(valueInWei);
+                showStatus("ट्रांजैक्शन भेजा गया...", "success");
+                await tx.wait();
+                showStatus("मैक्सिमम एयरड्रॉप सफलतापूर्वक अपडेट हो गया!", "success");
+                await loadContractStats();
+            } catch (error) {
+                showStatus("त्रुटि: " + error.message, "error");
+            }
+        }
+
+        async function setTotalAirdropCap() {
+            const value = document.getElementById('totalAirdropCap').value;
+            if (!value) {
+                showStatus("कृपया मान दर्ज करें!", "error");
+                return;
+            }
+
+            try {
+                const valueInWei = ethers.utils.parseUnits(value, TOKEN_DECIMALS);
+                const tx = await contract.setTotalAirdropCap(valueInWei);
+                showStatus("ट्रांजैक्शन भेजा गया...", "success");
+                await tx.wait();
+                showStatus("कुल एयरड्रॉप कैप सफलतापूर्वक अपडेट हो गया!", "success");
+                await loadContractStats();
+            } catch (error) {
+                showStatus("त्रुटि: " + error.message, "error");
+            }
+        }
+
+        async function setWithdrawDelay() {
+            const days = document.getElementById('withdrawDelay').value;
+            if (!days) {
+                showStatus("कृपया दिनों की संख्या दर्ज करें!", "error");
+                return;
+            }
+
+            try {
+                const seconds = days * 24 * 60 * 60;
+                const tx = await contract.setWithdrawDelay(seconds);
+                showStatus("ट्रांजैक्शन भेजा गया...", "success");
+                await tx.wait();
+                showStatus("विथड्रॉल डिले सफलतापूर्वक अपडेट हो गया!", "success");
+                await loadContractStats();
+            } catch (error) {
+                showStatus("त्रुटि: " + error.message, "error");
+            }
+        }
+
+        async function setReferralPercents() {
+            const value = document.getElementById('referralPercents').value;
+            if (!value) {
+                showStatus("कृपया मान दर्ज करें!", "error");
+                return;
+            }
+
+            try {
+                const percents = value.split(',').map(p => parseInt(p.trim()));
+                const tx = await contract.setReferralPercents(percents);
+                showStatus("ट्रांजैक्शन भेजा गया...", "success");
+                await tx.wait();
+                showStatus("रेफरल परसेंटेज सफलतापूर्वक अपडेट हो गए!", "success");
+                await loadContractStats();
+            } catch (error) {
+                showStatus("त्रुटि: " + error.message, "error");
+            }
+        }
+
+        // विथड्रॉल फंक्शन्स
+        async function withdrawTokens() {
+            const amount = document.getElementById('withdrawAmount').value;
+            if (!amount) {
+                showStatus("कृपया राशि दर्ज करें!", "error");
+                return;
+            }
+
+            try {
+                const amountInWei = ethers.utils.parseUnits(amount, TOKEN_DECIMALS);
+                const tx = await contract.withdrawTokens(amountInWei);
+                showStatus("ट्रांजैक्शन भेजा गया...", "success");
+                await tx.wait();
+                showStatus("टोकन सफलतापूर्वक निकाल लिए गए!", "success");
+                await loadContractStats();
+            } catch (error) {
+                showStatus("त्रुटि: " + error.message, "error");
+            }
+        }
+
+        async function requestWithdrawAnyToken() {
+            const tokenAddress = document.getElementById('anyTokenAddress').value;
+            const amount = document.getElementById('anyTokenAmount').value;
+
+            if (!tokenAddress || !amount) {
+                showStatus("कृपया टोकन पता और राशि दर्ज करें!", "error");
+                return;
+            }
+
+            try {
+                const amountInWei = ethers.utils.parseUnits(amount, 18);
+                const tx = await contract.requestWithdrawAnyToken(tokenAddress, amountInWei);
+                showStatus("विथड्रॉल रिक्वेस्ट भेजी गई...", "success");
+                await tx.wait();
+                showStatus("विथड्रॉल रिक्वेस्ट सफल!", "success");
+            } catch (error) {
+                showStatus("त्रुटि: " + error.message, "error");
+            }
+        }
+
+        async function executeWithdrawAnyToken() {
+            const tokenAddress = document.getElementById('anyTokenAddress').value;
+            const amount = document.getElementById('anyTokenAmount').value;
+
+            if (!tokenAddress || !amount) {
+                showStatus("कृपया टोकन पता और राशि दर्ज करें!", "error");
+                return;
+            }
+
+            try {
+                const amountInWei = ethers.utils.parseUnits(amount, 18);
+                const tx = await contract.executeWithdrawAnyToken(tokenAddress, amountInWei);
+                showStatus("विथड्रॉल एक्जीक्यूट किया जा रहा है...", "success");
+                await tx.wait();
+                showStatus("विथड्रॉल सफलतापूर्वक एक्जीक्यूट हो गया!", "success");
+            } catch (error) {
+                showStatus("त्रुटि: " + error.message, "error");
+            }
+        }
+
+        async function withdrawBNB() {
+            const amount = document.getElementById('bnbWithdrawAmount').value;
+            if (!amount) {
+                showStatus("कृपया राशि दर्ज करें!", "error");
+                return;
+            }
+
+            try {
+                const amountInWei = ethers.utils.parseEther(amount);
+                const tx = await contract.withdrawBNB(amountInWei);
+                showStatus("ट्रांजैक्शन भेजा गया...", "success");
+                await tx.wait();
+                showStatus("BNB सफलतापूर्वक निकाल लिए गए!", "success");
+            } catch (error) {
+                showStatus("त्रुटि: " + error.message, "error");
+            }
+        }
+
+        // कॉन्ट्रैक्ट कंट्रोल
+        async function pauseContract() {
+            try {
+                const tx = await contract.pause();
+                showStatus("कॉन्ट्रैक्ट पॉज किया जा रहा है...", "success");
+                await tx.wait();
+                showStatus("कॉन्ट्रैक्ट सफलतापूर्वक पॉज हो गया!", "success");
+            } catch (error) {
+                showStatus("त्रुटि: " + error.message, "error");
+            }
+        }
+
+        async function unpauseContract() {
+            try {
+                const tx = await contract.unpause();
+                showStatus("कॉन्ट्रैक्ट अनपॉज किया जा रहा है...", "success");
+                await tx.wait();
+                showStatus("कॉन्ट्रैक्ट सफलतापूर्वक अनपॉज हो गया!", "success");
+            } catch (error) {
+                showStatus("त्रुटि: " + error.message, "error");
+            }
+        }
+
+        // स्टेटस मैसेज दिखाएं
+        function showStatus(message, type) {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.textContent = message;
+            statusDiv.className = 'status ' + type;
+            
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // पेज लोड होने पर ऑटो कनेक्ट का प्रयास करें
+        window.addEventListener('load', async () => {
+            if (window.ethereum) {
+                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                if (accounts.length > 0) {
+                    await connectWallet();
+                }
+            }
+        });
+    </script>
+</body>
+</html>
