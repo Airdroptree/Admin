@@ -343,7 +343,7 @@
                     <strong>नेटवर्क:</strong> 
                     <span id="networkInfo">अज्ञात</span>
                 </div>
-                <button class="btn btn-primary" onclick="connectWallet()" id="connectBtn">
+                <button class="btn btn-primary" id="connectBtn">
                     वॉलेट कनेक्ट करें
                 </button>
             </div>
@@ -379,7 +379,7 @@
                         </div>
                     </div>
                     
-                    <button class="btn btn-primary" onclick="loadContractStats()" style="width: 100%;">
+                    <button class="btn btn-primary" id="loadStatsBtn" style="width: 100%;">
                         स्टेटस अपडेट करें
                     </button>
                 </div>
@@ -391,7 +391,7 @@
                     <div class="form-group">
                         <label>कॉन्ट्रैक्ट ओनर:</label>
                         <div class="current-value" id="basicOwner">लोड हो रहा है...</div>
-                        <button class="btn btn-info" onclick="getOwner()" style="margin-top: 10px; width: 100%;">
+                        <button class="btn btn-info" id="ownerBtn" style="margin-top: 10px; width: 100%;">
                             ओनर चेक करें
                         </button>
                     </div>
@@ -399,7 +399,7 @@
                     <div class="form-group">
                         <label>कॉन्ट्रैक्ट पॉज्ड:</label>
                         <div class="current-value" id="basicPaused">लोड हो रहा है...</div>
-                        <button class="btn btn-info" onclick="getPaused()" style="margin-top: 10px; width: 100%;">
+                        <button class="btn btn-info" id="pausedBtn" style="margin-top: 10px; width: 100%;">
                             पॉज स्टेटस चेक करें
                         </button>
                     </div>
@@ -407,7 +407,7 @@
                     <div class="form-group">
                         <label>टोकन एड्रेस:</label>
                         <div class="current-value" id="basicToken">लोड हो रहा है...</div>
-                        <button class="btn btn-info" onclick="getTokenAddress()" style="margin-top: 10px; width: 100%;">
+                        <button class="btn btn-info" id="tokenBtn" style="margin-top: 10px; width: 100%;">
                             टोकन एड्रेस चेक करें
                         </button>
                     </div>
@@ -425,10 +425,10 @@
                         <p>यहाँ बेसिक फंक्शन्स टेस्ट कर सकते हैं जो कॉन्ट्रैक्ट में available हैं:</p>
                         
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
-                            <button class="btn btn-warning" onclick="testAllFunctions()" id="testAllBtn">
+                            <button class="btn btn-warning" id="testAllBtn">
                                 सभी फंक्शन्स टेस्ट करें
                             </button>
-                            <button class="btn btn-danger" onclick="resetUI()">
+                            <button class="btn btn-danger" id="resetBtn">
                                 UI रीसेट करें
                             </button>
                         </div>
@@ -451,13 +451,13 @@
                         <p>एक बार बेसिक कनेक्शन काम करने के बाद ये फंक्शन्स enable होंगे।</p>
                     </div>
                     
-                    <button class="btn btn-success" onclick="showComingSoon()" style="width: 100%; margin-bottom: 10px;">
+                    <button class="btn btn-success" id="depositBtn" style="width: 100%; margin-bottom: 10px;">
                         डिपॉजिट टोकन
                     </button>
-                    <button class="btn btn-success" onclick="showComingSoon()" style="width: 100%; margin-bottom: 10px;">
+                    <button class="btn btn-success" id="withdrawBtn" style="width: 100%; margin-bottom: 10px;">
                         टोकन निकालें
                     </button>
-                    <button class="btn btn-success" onclick="showComingSoon()" style="width: 100%;">
+                    <button class="btn btn-success" id="settingsBtn" style="width: 100%;">
                         सेटिंग्स बदलें
                     </button>
                 </div>
@@ -542,8 +542,12 @@
                     
                     showStatus("वॉलेट सफलतापूर्वक कनेक्ट हो गया! अब कॉन्ट्रैक्ट टेस्ट करें।", "success");
                     
-                    // Enable test button
+                    // Enable test buttons
                     document.getElementById('testAllBtn').disabled = false;
+                    document.getElementById('ownerBtn').disabled = false;
+                    document.getElementById('pausedBtn').disabled = false;
+                    document.getElementById('tokenBtn').disabled = false;
+                    document.getElementById('loadStatsBtn').disabled = false;
                     
                 } else {
                     showStatus("MetaMask इंस्टॉल नहीं है!", "error");
@@ -692,14 +696,17 @@
                 const result = await testFunction('token');
                 if (result.success) {
                     document.getElementById('basicToken').textContent = result.result;
-                document.getElementById('lastError').textContent = 'कोई एरर नहीं';
-                showStatus("टोकन एड्रेस सफलतापूर्वक लोड हो गया!", "success");
-                return result.result;
-            } else {
-                document.getElementById('basicToken').textContent = 'Error: ' + result.error;
-                document.getElementById('lastError').textContent = result.error;
-                showStatus("टोकन एड्रेस लोड नहीं हो पाया", "error");
-                return null;
+                    document.getElementById('lastError').textContent = 'कोई एरर नहीं';
+                    showStatus("टोकन एड्रेस सफलतापूर्वक लोड हो गया!", "success");
+                    return result.result;
+                } else {
+                    document.getElementById('basicToken').textContent = 'Error: ' + result.error;
+                    document.getElementById('lastError').textContent = result.error;
+                    showStatus("टोकन एड्रेस लोड नहीं हो पाया", "error");
+                    return null;
+                }
+            } catch (error) {
+                document.getElementById('basicToken').textContent = 'Error: ' + error.message;
             }
         }
 
@@ -735,14 +742,35 @@
             document.getElementById('connectBtn').disabled = false;
             document.getElementById('walletAddress').textContent = 'कनेक्ट नहीं किया गया';
             document.getElementById('networkInfo').textContent = 'अज्ञात';
+            
+            // Disable all buttons
             document.getElementById('testAllBtn').disabled = true;
+            document.getElementById('ownerBtn').disabled = true;
+            document.getElementById('pausedBtn').disabled = true;
+            document.getElementById('tokenBtn').disabled = true;
+            document.getElementById('loadStatsBtn').disabled = true;
+            
             document.getElementById('testResults').innerHTML = '';
             document.getElementById('lastError').textContent = 'कोई एरर नहीं';
             showStatus("UI रीसेट हो गया। नया कनेक्शन try करें।", "success");
         }
 
+        // Event Listeners Setup
+        function setupEventListeners() {
+            document.getElementById('connectBtn').addEventListener('click', connectWallet);
+            document.getElementById('testAllBtn').addEventListener('click', testAllFunctions);
+            document.getElementById('ownerBtn').addEventListener('click', getOwner);
+            document.getElementById('pausedBtn').addEventListener('click', getPaused);
+            document.getElementById('tokenBtn').addEventListener('click', getTokenAddress);
+            document.getElementById('loadStatsBtn').addEventListener('click', loadContractStats);
+            document.getElementById('resetBtn').addEventListener('click', resetUI);
+            document.getElementById('depositBtn').addEventListener('click', showComingSoon);
+            document.getElementById('withdrawBtn').addEventListener('click', showComingSoon);
+            document.getElementById('settingsBtn').addEventListener('click', showComingSoon);
+        }
+
         // Auto connect on page load
-        window.addEventListener('load', async () => {
+        async function autoConnect() {
             console.log('Page loaded, checking for existing connection...');
             if (window.ethereum) {
                 try {
@@ -755,31 +783,48 @@
                     console.log('Auto-connect failed:', error);
                 }
             }
-        });
-
-        // Network change listener
-        if (window.ethereum) {
-            window.ethereum.on('chainChanged', (chainId) => {
-                console.log('Network changed:', chainId);
-                showStatus("नेटवर्क बदल गया है। पेज रीलोड हो रहा है...", "warning");
-                setTimeout(() => {
-                    window.location.reload();
-                }, 2000);
-            });
-
-            window.ethereum.on('accountsChanged', (accounts) => {
-                console.log('Account changed:', accounts);
-                showStatus("वॉलेट अकाउंट बदल गया है। पेज रीलोड हो रहा है...", "warning");
-                setTimeout(() => {
-                    window.location.reload();
-                }, 2000);
-            });
         }
 
-        // Initialize test button as disabled
-        document.addEventListener('DOMContentLoaded', function() {
+        // Network change listener
+        function setupNetworkListeners() {
+            if (window.ethereum) {
+                window.ethereum.on('chainChanged', (chainId) => {
+                    console.log('Network changed:', chainId);
+                    showStatus("नेटवर्क बदल गया है। पेज रीलोड हो रहा है...", "warning");
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                });
+
+                window.ethereum.on('accountsChanged', (accounts) => {
+                    console.log('Account changed:', accounts);
+                    showStatus("वॉलेट अकाउंट बदल गया है। पेज रीलोड हो रहा है...", "warning");
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                });
+            }
+        }
+
+        // Initialize the application
+        function initApp() {
+            console.log('Initializing application...');
+            setupEventListeners();
+            setupNetworkListeners();
+            
+            // Disable all buttons initially
             document.getElementById('testAllBtn').disabled = true;
-        });
+            document.getElementById('ownerBtn').disabled = true;
+            document.getElementById('pausedBtn').disabled = true;
+            document.getElementById('tokenBtn').disabled = true;
+            document.getElementById('loadStatsBtn').disabled = true;
+            
+            // Try auto-connect
+            autoConnect();
+        }
+
+        // Start the app when page loads
+        window.addEventListener('load', initApp);
     </script>
 </body>
 </html>
