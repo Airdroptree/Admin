@@ -307,6 +307,23 @@
             font-family: monospace;
             font-size: 12px;
         }
+
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 5px;
+            background: #f8f9fa;
+        }
+
+        .test-success {
+            border-left: 4px solid #28a745;
+            background: #d4edda;
+        }
+
+        .test-error {
+            border-left: 4px solid #dc3545;
+            background: #f8d7da;
+        }
     </style>
 </head>
 <body>
@@ -362,28 +379,6 @@
                         </div>
                     </div>
                     
-                    <div class="stats">
-                        <div class="stat-item">
-                            <div class="stat-value" id="totalDistributed">0</div>
-                            <div class="stat-label">कुल वितरित टोकन</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value" id="totalAirdropCap">0</div>
-                            <div class="stat-label">कुल कैप</div>
-                        </div>
-                    </div>
-                    
-                    <div class="stats">
-                        <div class="stat-item">
-                            <div class="stat-value" id="minUSDTDisplay">0</div>
-                            <div class="stat-label">न्यूनतम USDT</div>
-                        </div>
-                        <div class="stat-item">
-                            <div class="stat-value" id="maxAirdropDisplay">0</div>
-                            <div class="stat-label">मैक्स एयरड्रॉप</div>
-                        </div>
-                    </div>
-                    
                     <button class="btn btn-primary" onclick="loadContractStats()" style="width: 100%;">
                         स्टेटस अपडेट करें
                     </button>
@@ -391,7 +386,7 @@
 
                 <!-- Basic Functions -->
                 <div class="card">
-                    <h3>बेसिक फंक्शन्स</h3>
+                    <h3>बेसिक फंक्शन्स टेस्ट</h3>
                     
                     <div class="form-group">
                         <label>कॉन्ट्रैक्ट ओनर:</label>
@@ -430,13 +425,17 @@
                         <p>यहाँ बेसिक फंक्शन्स टेस्ट कर सकते हैं जो कॉन्ट्रैक्ट में available हैं:</p>
                         
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
-                            <button class="btn btn-warning" onclick="testBasicFunctions()">
-                                बेसिक फंक्शन्स टेस्ट करें
+                            <button class="btn btn-warning" onclick="testAllFunctions()" id="testAllBtn">
+                                सभी फंक्शन्स टेस्ट करें
                             </button>
                             <button class="btn btn-danger" onclick="resetUI()">
                                 UI रीसेट करें
                             </button>
                         </div>
+                    </div>
+
+                    <div id="testResults">
+                        <!-- Test results will appear here -->
                     </div>
 
                     <div class="debug-info">
@@ -476,7 +475,7 @@
         let contract;
         let userAddress;
 
-        // कॉन्ट्रैक्ट एड्रेस - यहाँ आपका कॉन्ट्रैक्ट एड्रेस डालें
+        // कॉन्ट्रैक्ट एड्रेस
         const CONTRACT_ADDRESS = "0x438a33ac022b837f499449e64c07491466edc0bc";
         
         // Simplified ABI - केवल basic functions
@@ -486,13 +485,11 @@
             "function paused() external view returns (bool)",
             "function token() external view returns (address)",
             "function usdt() external view returns (address)",
-            
-            // Optional functions (comment out if they don't exist)
-            // "function minUSDT() external view returns (uint256)",
-            // "function maxAirdropPerClaim() external view returns (uint256)",
-            // "function totalAirdropCap() external view returns (uint256)",
-            // "function totalDistributed() external view returns (uint256)",
-            // "function withdrawDelay() external view returns (uint256)"
+            "function minUSDT() external view returns (uint256)",
+            "function maxAirdropPerClaim() external view returns (uint256)",
+            "function totalAirdropCap() external view returns (uint256)",
+            "function totalDistributed() external view returns (uint256)",
+            "function withdrawDelay() external view returns (uint256)"
         ];
 
         console.log('Ethers loaded:', typeof ethers !== 'undefined');
@@ -545,8 +542,8 @@
                     
                     showStatus("वॉलेट सफलतापूर्वक कनेक्ट हो गया! अब कॉन्ट्रैक्ट टेस्ट करें।", "success");
                     
-                    // Basic functions test
-                    await testBasicFunctions();
+                    // Enable test button
+                    document.getElementById('testAllBtn').disabled = false;
                     
                 } else {
                     showStatus("MetaMask इंस्टॉल नहीं है!", "error");
@@ -577,76 +574,143 @@
             return networks[chainId] || `Unknown Network (${chainId})`;
         }
 
-        // बेसिक फंक्शन्स टेस्ट करें
-        async function testBasicFunctions() {
+        // सभी फंक्शन्स टेस्ट करें
+        async function testAllFunctions() {
             if (!contract) {
                 showStatus("पहले वॉलेट कनेक्ट करें!", "error");
                 return;
             }
 
             try {
-                showStatus("बेसिक फंक्शन्स टेस्ट किए जा रहे हैं...", "success");
+                const testBtn = document.getElementById('testAllBtn');
+                testBtn.innerHTML = '<span class="loading"></span> टेस्टिंग...';
+                testBtn.disabled = true;
+
+                showStatus("सभी फंक्शन्स टेस्ट किए जा रहे हैं...", "success");
                 
-                // Test basic functions one by one
-                await getOwner();
-                await getPaused();
-                await getTokenAddress();
+                // Clear previous results
+                document.getElementById('testResults').innerHTML = '';
                 
-                showStatus("बेसिक फंक्शन्स टेस्ट complete!", "success");
+                // Test functions one by one
+                await addTestResult("owner()", await testFunction('owner'));
+                await addTestResult("paused()", await testFunction('paused'));
+                await addTestResult("token()", await testFunction('token'));
+                await addTestResult("usdt()", await testFunction('usdt'));
+                await addTestResult("minUSDT()", await testFunction('minUSDT'));
+                await addTestResult("maxAirdropPerClaim()", await testFunction('maxAirdropPerClaim'));
+                await addTestResult("totalAirdropCap()", await testFunction('totalAirdropCap'));
+                await addTestResult("totalDistributed()", await testFunction('totalDistributed'));
+                await addTestResult("withdrawDelay()", await testFunction('withdrawDelay'));
+                
+                showStatus("सभी फंक्शन्स टेस्ट complete!", "success");
+                
+                testBtn.textContent = 'सभी फंक्शन्स टेस्ट करें';
+                testBtn.disabled = false;
                 
             } catch (error) {
-                console.error("बेसिक फंक्शन्स टेस्ट में त्रुटि:", error);
-                showStatus("कुछ फंक्शन्स काम नहीं कर रहे: " + error.message, "warning");
+                console.error("फंक्शन्स टेस्ट में त्रुटि:", error);
+                showStatus("टेस्टिंग में त्रुटि: " + error.message, "error");
                 document.getElementById('lastError').textContent = error.message;
+                
+                const testBtn = document.getElementById('testAllBtn');
+                testBtn.textContent = 'सभी फंक्शन्स टेस्ट करें';
+                testBtn.disabled = false;
             }
         }
 
-        // ओनर चेक करें
+        // Individual function test
+        async function testFunction(functionName) {
+            try {
+                const result = await contract[functionName]();
+                return {
+                    success: true,
+                    result: result.toString(),
+                    error: null
+                };
+            } catch (error) {
+                return {
+                    success: false,
+                    result: null,
+                    error: error.message
+                };
+            }
+        }
+
+        // Add test result to UI
+        function addTestResult(functionName, testResult) {
+            const resultsDiv = document.getElementById('testResults');
+            const resultDiv = document.createElement('div');
+            resultDiv.className = `test-result ${testResult.success ? 'test-success' : 'test-error'}`;
+            
+            if (testResult.success) {
+                resultDiv.innerHTML = `
+                    <strong>${functionName}</strong>: ✅ SUCCESS
+                    <div style="font-size: 11px; margin-top: 5px;">Result: ${testResult.result}</div>
+                `;
+            } else {
+                resultDiv.innerHTML = `
+                    <strong>${functionName}</strong>: ❌ FAILED
+                    <div style="font-size: 11px; margin-top: 5px; color: #dc3545;">Error: ${testResult.error}</div>
+                `;
+            }
+            
+            resultsDiv.appendChild(resultDiv);
+        }
+
+        // Individual function tests
         async function getOwner() {
             try {
-                const owner = await contract.owner();
-                document.getElementById('basicOwner').textContent = owner;
-                document.getElementById('debugOwner').textContent = owner;
-                
-                // Check if connected wallet is owner
-                const isOwner = owner.toLowerCase() === userAddress.toLowerCase();
-                if (isOwner) {
-                    document.getElementById('basicOwner').innerHTML = owner + ' <span style="color: green;">✓ (आप ओनर हैं)</span>';
+                const result = await testFunction('owner');
+                if (result.success) {
+                    document.getElementById('basicOwner').innerHTML = 
+                        `${result.result} <span style="color: green;">✓</span>`;
+                    document.getElementById('debugOwner').textContent = result.result;
                 } else {
-                    document.getElementById('basicOwner').innerHTML = owner + ' <span style="color: red;">✗ (आप ओनर नहीं हैं)</span>';
+                    document.getElementById('basicOwner').textContent = 'Error: ' + result.error;
                 }
-                
             } catch (error) {
                 document.getElementById('basicOwner').textContent = 'Error: ' + error.message;
-                document.getElementById('lastError').textContent = 'owner(): ' + error.message;
             }
         }
 
-        // पॉज स्टेटस चेक करें
         async function getPaused() {
             try {
-                const paused = await contract.paused();
-                document.getElementById('basicPaused').textContent = paused ? 'हाँ ✅' : 'नहीं ❌';
+                const result = await testFunction('paused');
+                if (result.success) {
+                    document.getElementById('basicPaused').textContent = 
+                        result.result === 'true' ? 'हाँ ✅' : 'नहीं ❌';
+                } else {
+                    document.getElementById('basicPaused').textContent = 'Error: ' + result.error;
+                }
             } catch (error) {
                 document.getElementById('basicPaused').textContent = 'Error: ' + error.message;
-                document.getElementById('lastError').textContent = 'paused(): ' + error.message;
             }
         }
 
-        // टोकन एड्रेस चेक करें
         async function getTokenAddress() {
             try {
-                const tokenAddress = await contract.token();
-                document.getElementById('basicToken').textContent = tokenAddress;
-            } catch (error) {
-                document.getElementById('basicToken').textContent = 'Error: ' + error.message;
-                document.getElementById('lastError').textContent = 'token(): ' + error.message;
+                const result = await testFunction('token');
+                if (result.success) {
+                    document.getElementById('basicToken').textContent = result.result;
+                document.getElementById('lastError').textContent = 'कोई एरर नहीं';
+                showStatus("टोकन एड्रेस सफलतापूर्वक लोड हो गया!", "success");
+                return result.result;
+            } else {
+                document.getElementById('basicToken').textContent = 'Error: ' + result.error;
+                document.getElementById('lastError').textContent = result.error;
+                showStatus("टोकन एड्रेस लोड नहीं हो पाया", "error");
+                return null;
             }
         }
 
-        // पुराना स्टेटस लोड फंक्शन (compatibility के लिए)
+        // पुराना स्टेटस लोड फंक्शन
         async function loadContractStats() {
-            showStatus("यह फीचर अभी टेस्टिंग में है। पहले बेसिक फंक्शन्स टेस्ट करें।", "warning");
+            if (!contract) {
+                showStatus("पहले वॉलेट कनेक्ट करें!", "error");
+                return;
+            }
+            showStatus("स्टेटस लोड हो रहा है...", "success");
+            await testAllFunctions();
         }
 
         // स्टेटस मैसेज दिखाएं
@@ -654,6 +718,7 @@
             const statusDiv = document.getElementById('statusMessage');
             statusDiv.textContent = message;
             statusDiv.className = 'status ' + type;
+            statusDiv.style.display = 'block';
             
             setTimeout(() => {
                 statusDiv.style.display = 'none';
@@ -670,6 +735,9 @@
             document.getElementById('connectBtn').disabled = false;
             document.getElementById('walletAddress').textContent = 'कनेक्ट नहीं किया गया';
             document.getElementById('networkInfo').textContent = 'अज्ञात';
+            document.getElementById('testAllBtn').disabled = true;
+            document.getElementById('testResults').innerHTML = '';
+            document.getElementById('lastError').textContent = 'कोई एरर नहीं';
             showStatus("UI रीसेट हो गया। नया कनेक्शन try करें।", "success");
         }
 
@@ -707,6 +775,11 @@
                 }, 2000);
             });
         }
+
+        // Initialize test button as disabled
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('testAllBtn').disabled = true;
+        });
     </script>
 </body>
 </html>
