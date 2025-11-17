@@ -307,23 +307,6 @@
             font-family: monospace;
             font-size: 12px;
         }
-
-        .test-result {
-            margin: 10px 0;
-            padding: 10px;
-            border-radius: 5px;
-            background: #f8f9fa;
-        }
-
-        .test-success {
-            border-left: 4px solid #28a745;
-            background: #d4edda;
-        }
-
-        .test-error {
-            border-left: 4px solid #dc3545;
-            background: #f8d7da;
-        }
     </style>
 </head>
 <body>
@@ -356,14 +339,6 @@
                 <div class="card">
                     <h3>कॉन्ट्रैक्ट स्टेटस</h3>
                     
-                    <div class="info-box">
-                        <h4>Debug Information</h4>
-                        <div><strong>Contract Address:</strong> <span id="debugContractAddress">-</span></div>
-                        <div><strong>Network:</strong> <span id="debugNetwork">-</span></div>
-                        <div><strong>Connected Wallet:</strong> <span id="debugWallet">-</span></div>
-                        <div><strong>Contract Owner:</strong> <span id="debugOwner">-</span></div>
-                    </div>
-
                     <div class="balance-info">
                         <div class="balance-row">
                             <span>कॉन्ट्रैक्ट टोकन बैलेंस:</span>
@@ -379,36 +354,79 @@
                         </div>
                     </div>
                     
+                    <div class="stats">
+                        <div class="stat-item">
+                            <div class="stat-value" id="totalDistributed">0</div>
+                            <div class="stat-label">कुल वितरित टोकन</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="totalAirdropCap">0</div>
+                            <div class="stat-label">कुल कैप</div>
+                        </div>
+                    </div>
+                    
+                    <div class="stats">
+                        <div class="stat-item">
+                            <div class="stat-value" id="minUSDTDisplay">0</div>
+                            <div class="stat-label">न्यूनतम USDT</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-value" id="maxAirdropDisplay">0</div>
+                            <div class="stat-label">मैक्स एयरड्रॉप</div>
+                        </div>
+                    </div>
+                    
                     <button class="btn btn-primary" id="loadStatsBtn" style="width: 100%;">
                         स्टेटस अपडेट करें
                     </button>
                 </div>
 
-                <!-- Basic Functions -->
+                <!-- डिपॉजिट सेक्शन -->
                 <div class="card">
-                    <h3>बेसिक फंक्शन्स टेस्ट</h3>
+                    <h3>टोकन डिपॉजिट</h3>
                     
                     <div class="form-group">
-                        <label>कॉन्ट्रैक्ट ओनर:</label>
-                        <div class="current-value" id="basicOwner">लोड हो रहा है...</div>
-                        <button class="btn btn-info" id="ownerBtn" style="margin-top: 10px; width: 100%;">
-                            ओनर चेक करें
+                        <label>डिपॉजिट राशि (टोकन):</label>
+                        <input type="number" id="depositAmount" class="form-control" placeholder="1000" step="0.001">
+                        <div class="decimals-info">टोकन decimals: 18</div>
+                        <button class="btn btn-info" id="depositBtn" style="margin-top: 10px; width: 100%;">
+                            टोकन डिपॉजिट करें
+                        </button>
+                    </div>
+
+                    <div class="info-box">
+                        <h4>डिपॉजिट नोट्स</h4>
+                        <ul style="padding-left: 20px; margin: 10px 0;">
+                            <li>डिपॉजिट करने से पहले टोकन की approval दें</li>
+                            <li>कॉन्ट्रैक्ट को टोकन ट्रांसफर करने की अनुमति देनी होगी</li>
+                            <li>डिपॉजिट successful होने पर एयरड्रॉप उपलब्ध होगा</li>
+                        </ul>
+                        <button class="btn btn-warning" id="approveBtn" style="width: 100%; margin-top: 10px;">
+                            टोकन Approve करें
+                        </button>
+                    </div>
+                </div>
+
+                <!-- कॉन्फ़िगरेशन सेटिंग्स -->
+                <div class="card">
+                    <h3>कॉन्फ़िगरेशन सेटिंग्स</h3>
+                    
+                    <div class="form-group">
+                        <label>न्यूनतम USDT (BSC - 18 Decimals):</label>
+                        <input type="number" id="minUSDT" class="form-control" placeholder="1" step="0.01">
+                        <div class="decimals-info">BSC USDT: 18 decimals</div>
+                        <div class="current-value">वर्तमान: <span id="currentMinUSDT">0</span> USDT</div>
+                        <button class="btn btn-success" id="setMinUSDTBtn" style="margin-top: 10px; width: 100%;">
+                            सेट करें
                         </button>
                     </div>
 
                     <div class="form-group">
-                        <label>कॉन्ट्रैक्ट पॉज्ड:</label>
-                        <div class="current-value" id="basicPaused">लोड हो रहा है...</div>
-                        <button class="btn btn-info" id="pausedBtn" style="margin-top: 10px; width: 100%;">
-                            पॉज स्टेटस चेक करें
-                        </button>
-                    </div>
-
-                    <div class="form-group">
-                        <label>टोकन एड्रेस:</label>
-                        <div class="current-value" id="basicToken">लोड हो रहा है...</div>
-                        <button class="btn btn-info" id="tokenBtn" style="margin-top: 10px; width: 100%;">
-                            टोकन एड्रेस चेक करें
+                        <label>मैक्सिमम एयरड्रॉप प्रति क्लेम (टोकन):</label>
+                        <input type="number" id="maxAirdropPerClaim" class="form-control" placeholder="5000000" step="1">
+                        <div class="current-value">वर्तमान: <span id="currentMaxAirdrop">0</span> टोकन</div>
+                        <button class="btn btn-success" id="setMaxAirdropBtn" style="margin-top: 10px; width: 100%;">
+                            सेट करें
                         </button>
                     </div>
                 </div>
@@ -416,50 +434,98 @@
 
             <!-- दाएं कॉलम -->
             <div class="right-column">
-                <!-- Debug Information -->
+                <!-- अतिरिक्त सेटिंग्स -->
                 <div class="card">
-                    <h3>कॉन्ट्रैक्ट टेस्टिंग</h3>
+                    <h3>अतिरिक्त सेटिंग्स</h3>
                     
-                    <div class="info-box">
-                        <h4>Available Functions Test</h4>
-                        <p>यहाँ बेसिक फंक्शन्स टेस्ट कर सकते हैं जो कॉन्ट्रैक्ट में available हैं:</p>
-                        
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
-                            <button class="btn btn-warning" id="testAllBtn">
-                                सभी फंक्शन्स टेस्ट करें
-                            </button>
-                            <button class="btn btn-danger" id="resetBtn">
-                                UI रीसेट करें
-                            </button>
-                        </div>
+                    <div class="form-group">
+                        <label>कुल एयरड्रॉप कैप (टोकन):</label>
+                        <input type="number" id="totalAirdropCap" class="form-control" placeholder="100000000" step="1">
+                        <div class="current-value">वर्तमान: <span id="currentTotalCap">0</span> टोकन</div>
+                        <button class="btn btn-success" id="setTotalCapBtn" style="margin-top: 10px; width: 100%;">
+                            सेट करें
+                        </button>
                     </div>
 
-                    <div id="testResults">
-                        <!-- Test results will appear here -->
+                    <div class="form-group">
+                        <label>विथड्रॉल डिले (दिनों में):</label>
+                        <input type="number" id="withdrawDelay" class="form-control" placeholder="7" step="1">
+                        <div class="current-value">वर्तमान: <span id="currentWithdrawDelay">0</span> सेकंड</div>
+                        <button class="btn btn-success" id="setWithdrawDelayBtn" style="margin-top: 10px; width: 100%;">
+                            सेट करें
+                        </button>
                     </div>
 
-                    <div class="debug-info">
-                        <strong>Last Error:</strong>
-                        <div id="lastError">कोई एरर नहीं</div>
+                    <div class="form-group">
+                        <label>रेफरल परसेंटेज (कॉमा से अलग करें):</label>
+                        <input type="text" id="referralPercents" class="form-control" placeholder="10,5,3,2,1" value="10,5,3,2,1">
+                        <small>उदाहरण: 10,5,3,2,1 (लेवल 1-5 के लिए)</small>
+                        <div class="current-value">वर्तमान: <span id="currentReferralPercents">लोड हो रहा है...</span></div>
+                        <button class="btn btn-success" id="setReferralPercentsBtn" style="margin-top: 10px; width: 100%;">
+                            सेट करें
+                        </button>
                     </div>
                 </div>
 
-                <!-- अन्य सेक्शन्स -->
+                <!-- टोकन निकासी -->
                 <div class="card">
-                    <h3>अन्य फंक्शन्स</h3>
-                    <div class="info-box">
-                        <p>एक बार बेसिक कनेक्शन काम करने के बाद ये फंक्शन्स enable होंगे।</p>
-                    </div>
+                    <h3>टोकन निकासी</h3>
                     
-                    <button class="btn btn-success" id="depositBtn" style="width: 100%; margin-bottom: 10px;">
-                        डिपॉजिट टोकन
-                    </button>
-                    <button class="btn btn-success" id="withdrawBtn" style="width: 100%; margin-bottom: 10px;">
-                        टोकन निकालें
-                    </button>
-                    <button class="btn btn-success" id="settingsBtn" style="width: 100%;">
-                        सेटिंग्स बदलें
-                    </button>
+                    <div class="form-group">
+                        <label>टोकन राशि:</label>
+                        <input type="number" id="withdrawAmount" class="form-control" placeholder="1000" step="0.001">
+                        <button class="btn btn-danger" id="withdrawTokensBtn" style="margin-top: 10px; width: 100%;">
+                            टोकन निकालें
+                        </button>
+                    </div>
+
+                    <div class="info-box">
+                        <h4>टाइमलॉक विथड्रॉल (अन्य टोकन्स)</h4>
+                        
+                        <div class="form-group">
+                            <label>टोकन पता:</label>
+                            <input type="text" id="anyTokenAddress" class="form-control" placeholder="0x...">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>राशि:</label>
+                            <input type="number" id="anyTokenAmount" class="form-control" placeholder="राशि" step="0.001">
+                        </div>
+
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <button class="btn btn-warning" id="requestWithdrawBtn">
+                                रिक्वेस्ट करें
+                            </button>
+                            <button class="btn btn-danger" id="executeWithdrawBtn">
+                                एक्जीक्यूट करें
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BNB निकासी और कंट्रोल -->
+                <div class="card">
+                    <h3>BNB निकासी & कंट्रोल</h3>
+                    
+                    <div class="form-group">
+                        <label>BNB राशि:</label>
+                        <input type="number" id="bnbWithdrawAmount" class="form-control" placeholder="1.5" step="0.001">
+                        <button class="btn btn-danger" id="withdrawBNBBtn" style="margin-top: 10px; width: 100%;">
+                            BNB निकालें
+                        </button>
+                    </div>
+
+                    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
+                        <h4>कॉन्ट्रैक्ट नियंत्रण</h4>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px;">
+                            <button class="btn btn-warning" id="pauseBtn">
+                                पॉज करें
+                            </button>
+                            <button class="btn btn-success" id="unpauseBtn">
+                                अनपॉज करें
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -474,13 +540,14 @@
         let signer;
         let contract;
         let userAddress;
+        let tokenContract;
 
         // कॉन्ट्रैक्ट एड्रेस
         const CONTRACT_ADDRESS = "0x438a33ac022b837f499449e64c07491466edc0bc";
         
-        // Simplified ABI - केवल basic functions
+        // Complete ABI with all functions
         const CONTRACT_ABI = [
-            // Basic view functions
+            // View functions
             "function owner() external view returns (address)",
             "function paused() external view returns (bool)",
             "function token() external view returns (address)",
@@ -489,10 +556,34 @@
             "function maxAirdropPerClaim() external view returns (uint256)",
             "function totalAirdropCap() external view returns (uint256)",
             "function totalDistributed() external view returns (uint256)",
-            "function withdrawDelay() external view returns (uint256)"
+            "function withdrawDelay() external view returns (uint256)",
+            "function getReferralPercents() external view returns (uint256[])",
+            
+            // Write functions
+            "function setMinUSDT(uint256 _minUSDT) external",
+            "function setMaxAirdropPerClaim(uint256 _max) external",
+            "function setTotalAirdropCap(uint256 _cap) external",
+            "function setWithdrawDelay(uint256 _delay) external",
+            "function setReferralPercents(uint256[] calldata _percents) external",
+            "function deposit(uint256 amount) external",
+            "function withdrawTokens(uint256 amount) external",
+            "function requestWithdrawAnyToken(address _token, uint256 amount) external",
+            "function executeWithdrawAnyToken(address _token, uint256 amount) external",
+            "function withdrawBNB(uint256 amount) external",
+            "function pause() external",
+            "function unpause() external"
         ];
 
-        console.log('Ethers loaded:', typeof ethers !== 'undefined');
+        // Token ABI
+        const TOKEN_ABI = [
+            "function balanceOf(address) view returns (uint256)",
+            "function approve(address spender, uint256 amount) external returns (bool)",
+            "function allowance(address owner, address spender) external view returns (uint256)",
+            "function decimals() view returns (uint8)"
+        ];
+
+        const USDT_DECIMALS = 18;
+        const TOKEN_DECIMALS = 18;
 
         // वॉलेट कनेक्ट करें
         async function connectWallet() {
@@ -519,35 +610,33 @@
                     signer = provider.getSigner();
                     userAddress = await signer.getAddress();
                     
-                    // Debug info update
-                    document.getElementById('debugContractAddress').textContent = CONTRACT_ADDRESS;
-                    document.getElementById('debugWallet').textContent = userAddress;
-                    
-                    // Network info
-                    const network = await provider.getNetwork();
-                    const networkName = getNetworkName(network.chainId);
-                    document.getElementById('networkInfo').textContent = `${networkName} (${network.chainId})`;
-                    document.getElementById('debugNetwork').textContent = `${networkName} (${network.chainId})`;
-                    
                     // Contract instance create करें
                     contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+                    
+                    // Token contract instance
+                    const tokenAddress = await contract.token();
+                    tokenContract = new ethers.Contract(tokenAddress, TOKEN_ABI, signer);
                     
                     // UI update करें
                     document.getElementById('walletAddress').textContent = 
                         userAddress.substring(0, 6) + '...' + userAddress.substring(38);
                     
+                    // Network info
+                    const network = await provider.getNetwork();
+                    const networkName = getNetworkName(network.chainId);
+                    document.getElementById('networkInfo').textContent = `${networkName} (${network.chainId})`;
+                    
                     connectBtn.textContent = 'कनेक्टेड';
                     connectBtn.classList.remove('btn-primary');
                     connectBtn.classList.add('btn-success');
                     
-                    showStatus("वॉलेट सफलतापूर्वक कनेक्ट हो गया! अब कॉन्ट्रैक्ट टेस्ट करें।", "success");
+                    showStatus("वॉलेट सफलतापूर्वक कनेक्ट हो गया!", "success");
                     
-                    // Enable test buttons
-                    document.getElementById('testAllBtn').disabled = false;
-                    document.getElementById('ownerBtn').disabled = false;
-                    document.getElementById('pausedBtn').disabled = false;
-                    document.getElementById('tokenBtn').disabled = false;
-                    document.getElementById('loadStatsBtn').disabled = false;
+                    // Enable all buttons
+                    enableAllButtons(true);
+                    
+                    // Load contract stats
+                    await loadContractStats();
                     
                 } else {
                     showStatus("MetaMask इंस्टॉल नहीं है!", "error");
@@ -559,8 +648,6 @@
                 const connectBtn = document.getElementById('connectBtn');
                 connectBtn.textContent = 'वॉलेट कनेक्ट करें';
                 connectBtn.disabled = false;
-                
-                document.getElementById('lastError').textContent = error.message;
             }
         }
 
@@ -571,153 +658,330 @@
                 56: 'BSC Mainnet',
                 97: 'BSC Testnet',
                 137: 'Polygon Mainnet',
-                80001: 'Polygon Testnet',
-                42161: 'Arbitrum One',
-                10: 'Optimism'
+                80001: 'Polygon Testnet'
             };
             return networks[chainId] || `Unknown Network (${chainId})`;
         }
 
-        // सभी फंक्शन्स टेस्ट करें
-        async function testAllFunctions() {
-            if (!contract) {
-                showStatus("पहले वॉलेट कनेक्ट करें!", "error");
-                return;
-            }
-
-            try {
-                const testBtn = document.getElementById('testAllBtn');
-                testBtn.innerHTML = '<span class="loading"></span> टेस्टिंग...';
-                testBtn.disabled = true;
-
-                showStatus("सभी फंक्शन्स टेस्ट किए जा रहे हैं...", "success");
-                
-                // Clear previous results
-                document.getElementById('testResults').innerHTML = '';
-                
-                // Test functions one by one
-                await addTestResult("owner()", await testFunction('owner'));
-                await addTestResult("paused()", await testFunction('paused'));
-                await addTestResult("token()", await testFunction('token'));
-                await addTestResult("usdt()", await testFunction('usdt'));
-                await addTestResult("minUSDT()", await testFunction('minUSDT'));
-                await addTestResult("maxAirdropPerClaim()", await testFunction('maxAirdropPerClaim'));
-                await addTestResult("totalAirdropCap()", await testFunction('totalAirdropCap'));
-                await addTestResult("totalDistributed()", await testFunction('totalDistributed'));
-                await addTestResult("withdrawDelay()", await testFunction('withdrawDelay'));
-                
-                showStatus("सभी फंक्शन्स टेस्ट complete!", "success");
-                
-                testBtn.textContent = 'सभी फंक्शन्स टेस्ट करें';
-                testBtn.disabled = false;
-                
-            } catch (error) {
-                console.error("फंक्शन्स टेस्ट में त्रुटि:", error);
-                showStatus("टेस्टिंग में त्रुटि: " + error.message, "error");
-                document.getElementById('lastError').textContent = error.message;
-                
-                const testBtn = document.getElementById('testAllBtn');
-                testBtn.textContent = 'सभी फंक्शन्स टेस्ट करें';
-                testBtn.disabled = false;
-            }
-        }
-
-        // Individual function test
-        async function testFunction(functionName) {
-            try {
-                const result = await contract[functionName]();
-                return {
-                    success: true,
-                    result: result.toString(),
-                    error: null
-                };
-            } catch (error) {
-                return {
-                    success: false,
-                    result: null,
-                    error: error.message
-                };
-            }
-        }
-
-        // Add test result to UI
-        function addTestResult(functionName, testResult) {
-            const resultsDiv = document.getElementById('testResults');
-            const resultDiv = document.createElement('div');
-            resultDiv.className = `test-result ${testResult.success ? 'test-success' : 'test-error'}`;
-            
-            if (testResult.success) {
-                resultDiv.innerHTML = `
-                    <strong>${functionName}</strong>: ✅ SUCCESS
-                    <div style="font-size: 11px; margin-top: 5px;">Result: ${testResult.result}</div>
-                `;
-            } else {
-                resultDiv.innerHTML = `
-                    <strong>${functionName}</strong>: ❌ FAILED
-                    <div style="font-size: 11px; margin-top: 5px; color: #dc3545;">Error: ${testResult.error}</div>
-                `;
-            }
-            
-            resultsDiv.appendChild(resultDiv);
-        }
-
-        // Individual function tests
-        async function getOwner() {
-            try {
-                const result = await testFunction('owner');
-                if (result.success) {
-                    document.getElementById('basicOwner').innerHTML = 
-                        `${result.result} <span style="color: green;">✓</span>`;
-                    document.getElementById('debugOwner').textContent = result.result;
-                } else {
-                    document.getElementById('basicOwner').textContent = 'Error: ' + result.error;
-                }
-            } catch (error) {
-                document.getElementById('basicOwner').textContent = 'Error: ' + error.message;
-            }
-        }
-
-        async function getPaused() {
-            try {
-                const result = await testFunction('paused');
-                if (result.success) {
-                    document.getElementById('basicPaused').textContent = 
-                        result.result === 'true' ? 'हाँ ✅' : 'नहीं ❌';
-                } else {
-                    document.getElementById('basicPaused').textContent = 'Error: ' + result.error;
-                }
-            } catch (error) {
-                document.getElementById('basicPaused').textContent = 'Error: ' + error.message;
-            }
-        }
-
-        async function getTokenAddress() {
-            try {
-                const result = await testFunction('token');
-                if (result.success) {
-                    document.getElementById('basicToken').textContent = result.result;
-                    document.getElementById('lastError').textContent = 'कोई एरर नहीं';
-                    showStatus("टोकन एड्रेस सफलतापूर्वक लोड हो गया!", "success");
-                    return result.result;
-                } else {
-                    document.getElementById('basicToken').textContent = 'Error: ' + result.error;
-                    document.getElementById('lastError').textContent = result.error;
-                    showStatus("टोकन एड्रेस लोड नहीं हो पाया", "error");
-                    return null;
-                }
-            } catch (error) {
-                document.getElementById('basicToken').textContent = 'Error: ' + error.message;
-            }
-        }
-
-        // पुराना स्टेटस लोड फंक्शन
+        // कॉन्ट्रैक्ट स्टेटस लोड करें
         async function loadContractStats() {
             if (!contract) {
                 showStatus("पहले वॉलेट कनेक्ट करें!", "error");
                 return;
             }
-            showStatus("स्टेटस लोड हो रहा है...", "success");
-            await testAllFunctions();
+
+            try {
+                showStatus("कॉन्ट्रैक्ट डेटा लोड हो रहा है...", "success");
+                
+                // Load all contract data
+                const [
+                    minUSDT, maxAirdrop, totalCap, totalDistributed, withdrawDelay,
+                    referralPercents, tokenAddress, contractBalance, userBalance, contractBNB
+                ] = await Promise.all([
+                    contract.minUSDT(),
+                    contract.maxAirdropPerClaim(),
+                    contract.totalAirdropCap(),
+                    contract.totalDistributed(),
+                    contract.withdrawDelay(),
+                    contract.getReferralPercents(),
+                    contract.token(),
+                    tokenContract.balanceOf(CONTRACT_ADDRESS),
+                    tokenContract.balanceOf(userAddress),
+                    provider.getBalance(CONTRACT_ADDRESS)
+                ]);
+                
+                // Update UI
+                document.getElementById('minUSDTDisplay').textContent = 
+                    parseFloat(ethers.utils.formatUnits(minUSDT, USDT_DECIMALS)).toLocaleString('hi-IN');
+                document.getElementById('maxAirdropDisplay').textContent = 
+                    parseFloat(ethers.utils.formatUnits(maxAirdrop, TOKEN_DECIMALS)).toLocaleString('hi-IN');
+                document.getElementById('totalAirdropCap').textContent = 
+                    parseFloat(ethers.utils.formatUnits(totalCap, TOKEN_DECIMALS)).toLocaleString('hi-IN');
+                document.getElementById('totalDistributed').textContent = 
+                    parseFloat(ethers.utils.formatUnits(totalDistributed, TOKEN_DECIMALS)).toLocaleString('hi-IN');
+                
+                document.getElementById('contractBalance').textContent = 
+                    parseFloat(ethers.utils.formatUnits(contractBalance, TOKEN_DECIMALS)).toLocaleString('hi-IN') + ' टोकन';
+                document.getElementById('userTokenBalance').textContent = 
+                    parseFloat(ethers.utils.formatUnits(userBalance, TOKEN_DECIMALS)).toLocaleString('hi-IN') + ' टोकन';
+                document.getElementById('contractBNBBalance').textContent = 
+                    parseFloat(ethers.utils.formatEther(contractBNB)).toLocaleString('hi-IN') + ' BNB';
+                
+                // Current values
+                document.getElementById('currentMinUSDT').textContent = 
+                    parseFloat(ethers.utils.formatUnits(minUSDT, USDT_DECIMALS)).toLocaleString('hi-IN') + ' USDT';
+                document.getElementById('currentMaxAirdrop').textContent = 
+                    parseFloat(ethers.utils.formatUnits(maxAirdrop, TOKEN_DECIMALS)).toLocaleString('hi-IN') + ' टोकन';
+                document.getElementById('currentTotalCap').textContent = 
+                    parseFloat(ethers.utils.formatUnits(totalCap, TOKEN_DECIMALS)).toLocaleString('hi-IN') + ' टोकन';
+                document.getElementById('currentWithdrawDelay').textContent = 
+                    withdrawDelay.toString() + ' सेकंड (' + Math.floor(withdrawDelay / (24 * 60 * 60)) + ' दिन)';
+                document.getElementById('currentReferralPercents').textContent = 
+                    referralPercents.map(p => p.toString() + '%').join(', ');
+                
+                // Set input values
+                document.getElementById('minUSDT').value = ethers.utils.formatUnits(minUSDT, USDT_DECIMALS);
+                document.getElementById('maxAirdropPerClaim').value = ethers.utils.formatUnits(maxAirdrop, TOKEN_DECIMALS);
+                document.getElementById('totalAirdropCap').value = ethers.utils.formatUnits(totalCap, TOKEN_DECIMALS);
+                document.getElementById('withdrawDelay').value = Math.floor(withdrawDelay / (24 * 60 * 60));
+                document.getElementById('referralPercents').value = referralPercents.map(p => p.toString()).join(',');
+
+                showStatus("कॉन्ट्रैक्ट डेटा सफलतापूर्वक लोड हो गया!", "success");
+                
+            } catch (error) {
+                console.error("स्टेटस लोड करने में त्रुटि:", error);
+                showStatus("स्टेटस लोड करने में त्रुटि: " + error.message, "error");
+            }
+        }
+
+        // टोकन approve करें
+        async function approveTokens() {
+            try {
+                const amount = document.getElementById('depositAmount').value;
+                if (!amount || amount <= 0) {
+                    showStatus("कृपया डिपॉजिट राशि पहले दर्ज करें!", "error");
+                    return;
+                }
+
+                const amountInWei = ethers.utils.parseUnits(amount, TOKEN_DECIMALS);
+                const bigAmount = ethers.constants.MaxUint256;
+                
+                const tx = await tokenContract.approve(CONTRACT_ADDRESS, bigAmount);
+                showStatus("Approve ट्रांजैक्शन भेजा गया...", "success");
+                await tx.wait();
+                showStatus("टोकन सफलतापूर्वक approve हो गए!", "success");
+                
+            } catch (error) {
+                console.error("Approve में त्रुटि:", error);
+                showStatus("Approve में त्रुटि: " + error.message, "error");
+            }
+        }
+
+        // टोकन डिपॉजिट करें
+        async function depositTokens() {
+            try {
+                const amount = document.getElementById('depositAmount').value;
+                if (!amount || amount <= 0) {
+                    showStatus("कृपया वैलिड राशि दर्ज करें!", "error");
+                    return;
+                }
+
+                const amountInWei = ethers.utils.parseUnits(amount, TOKEN_DECIMALS);
+                
+                // Check allowance
+                const allowance = await tokenContract.allowance(userAddress, CONTRACT_ADDRESS);
+                if (allowance.lt(amountInWei)) {
+                    showStatus("पहले टोकन approve करें! Allowance insufficient.", "error");
+                    return;
+                }
+
+                const tx = await contract.deposit(amountInWei);
+                showStatus("डिपॉजिट ट्रांजैक्शन भेजा गया...", "success");
+                await tx.wait();
+                showStatus("टोकन सफलतापूर्वक डिपॉजिट हो गए!", "success");
+                await loadContractStats();
+                
+            } catch (error) {
+                console.error("डिपॉजिट में त्रुटि:", error);
+                showStatus("डिपॉजिट में त्रुटि: " + error.message, "error");
+            }
+        }
+
+        // सेटिंग्स फंक्शन्स
+        async function setMinUSDT() {
+            try {
+                const value = document.getElementById('minUSDT').value;
+                if (!value) {
+                    showStatus("कृपया मान दर्ज करें!", "error");
+                    return;
+                }
+
+                const valueInWei = ethers.utils.parseUnits(value, USDT_DECIMALS);
+                const tx = await contract.setMinUSDT(valueInWei);
+                showStatus("ट्रांजैक्शन भेजा गया...", "success");
+                await tx.wait();
+                showStatus("न्यूनतम USDT सफलतापूर्वक अपडेट हो गया!", "success");
+                await loadContractStats();
+            } catch (error) {
+                showStatus("त्रुटि: " + error.message, "error");
+            }
+        }
+
+        async function setMaxAirdropPerClaim() {
+            try {
+                const value = document.getElementById('maxAirdropPerClaim').value;
+                if (!value) {
+                    showStatus("कृपया मान दर्ज करें!", "error");
+                    return;
+                }
+
+                const valueInWei = ethers.utils.parseUnits(value, TOKEN_DECIMALS);
+                const tx = await contract.setMaxAirdropPerClaim(valueInWei);
+                showStatus("ट्रांजैक्शन भेजा गया...", "success");
+                await tx.wait();
+                showStatus("मैक्सिमम एयरड्रॉप सफलतापूर्वक अपडेट हो गया!", "success");
+                await loadContractStats();
+            } catch (error) {
+                showStatus("त्रुटि: " + error.message, "error");
+            }
+        }
+
+        async function setTotalAirdropCap() {
+            try {
+                const value = document.getElementById('totalAirdropCap').value;
+                if (!value) {
+                    showStatus("कृपया मान दर्ज करें!", "error");
+                    return;
+                }
+
+                const valueInWei = ethers.utils.parseUnits(value, TOKEN_DECIMALS);
+                const tx = await contract.setTotalAirdropCap(valueInWei);
+                showStatus("ट्रांजैक्शन भेजा गया...", "success");
+                await tx.wait();
+                showStatus("कुल एयरड्रॉप कैप सफलतापूर्वक अपडेट हो गया!", "success");
+                await loadContractStats();
+            } catch (error) {
+                showStatus("त्रुटि: " + error.message, "error");
+            }
+        }
+
+        async function setWithdrawDelay() {
+            try {
+                const days = document.getElementById('withdrawDelay').value;
+                if (!days) {
+                    showStatus("कृपया दिनों की संख्या दर्ज करें!", "error");
+                    return;
+                }
+
+                const seconds = days * 24 * 60 * 60;
+                const tx = await contract.setWithdrawDelay(seconds);
+                showStatus("ट्रांजैक्शन भेजा गया...", "success");
+                await tx.wait();
+                showStatus("विथड्रॉल डिले सफलतापूर्वक अपडेट हो गया!", "success");
+                await loadContractStats();
+            } catch (error) {
+                showStatus("त्रुटि: " + error.message, "error");
+            }
+        }
+
+        async function setReferralPercents() {
+            try {
+                const value = document.getElementById('referralPercents').value;
+                if (!value) {
+                    showStatus("कृपया मान दर्ज करें!", "error");
+                    return;
+                }
+
+                const percents = value.split(',').map(p => parseInt(p.trim()));
+                const tx = await contract.setReferralPercents(percents);
+                showStatus("ट्रांजैक्शन भेजा गया...", "success");
+                await tx.wait();
+                showStatus("रेफरल परसेंटेज सफलतापूर्वक अपडेट हो गए!", "success");
+                await loadContractStats();
+            } catch (error) {
+                showStatus("त्रुटि: " + error.message, "error");
+            }
+        }
+
+        // विथड्रॉल फंक्शन्स
+        async function withdrawTokens() {
+            try {
+                const amount = document.getElementById('withdrawAmount').value;
+                if (!amount) {
+                    showStatus("कृपया राशि दर्ज करें!", "error");
+                    return;
+                }
+
+                const amountInWei = ethers.utils.parseUnits(amount, TOKEN_DECIMALS);
+                const tx = await contract.withdrawTokens(amountInWei);
+                showStatus("ट्रांजैक्शन भेजा गया...", "success");
+                await tx.wait();
+                showStatus("टोकन सफलतापूर्वक निकाल लिए गए!", "success");
+                await loadContractStats();
+            } catch (error) {
+                showStatus("त्रुटि: " + error.message, "error");
+            }
+        }
+
+        async function requestWithdrawAnyToken() {
+            try {
+                const tokenAddress = document.getElementById('anyTokenAddress').value;
+                const amount = document.getElementById('anyTokenAmount').value;
+
+                if (!tokenAddress || !amount) {
+                    showStatus("कृपया टोकन पता और राशि दर्ज करें!", "error");
+                    return;
+                }
+
+                const amountInWei = ethers.utils.parseUnits(amount, 18);
+                const tx = await contract.requestWithdrawAnyToken(tokenAddress, amountInWei);
+                showStatus("विथड्रॉल रिक्वेस्ट भेजी गई...", "success");
+                await tx.wait();
+                showStatus("विथड्रॉल रिक्वेस्ट सफल!", "success");
+            } catch (error) {
+                showStatus("त्रुटि: " + error.message, "error");
+            }
+        }
+
+        async function executeWithdrawAnyToken() {
+            try {
+                const tokenAddress = document.getElementById('anyTokenAddress').value;
+                const amount = document.getElementById('anyTokenAmount').value;
+
+                if (!tokenAddress || !amount) {
+                    showStatus("कृपया टोकन पता और राशि दर्ज करें!", "error");
+                    return;
+                }
+
+                const amountInWei = ethers.utils.parseUnits(amount, 18);
+                const tx = await contract.executeWithdrawAnyToken(tokenAddress, amountInWei);
+                showStatus("विथड्रॉल एक्जीक्यूट किया जा रहा है...", "success");
+                await tx.wait();
+                showStatus("विथड्रॉल सफलतापूर्वक एक्जीक्यूट हो गया!", "success");
+            } catch (error) {
+                showStatus("त्रुटि: " + error.message, "error");
+            }
+        }
+
+        async function withdrawBNB() {
+            try {
+                const amount = document.getElementById('bnbWithdrawAmount').value;
+                if (!amount) {
+                    showStatus("कृपया राशि दर्ज करें!", "error");
+                    return;
+                }
+
+                const amountInWei = ethers.utils.parseEther(amount);
+                const tx = await contract.withdrawBNB(amountInWei);
+                showStatus("ट्रांजैक्शन भेजा गया...", "success");
+                await tx.wait();
+                showStatus("BNB सफलतापूर्वक निकाल लिए गए!", "success");
+            } catch (error) {
+                showStatus("त्रुटि: " + error.message, "error");
+            }
+        }
+
+        // कॉन्ट्रैक्ट कंट्रोल
+        async function pauseContract() {
+            try {
+                const tx = await contract.pause();
+                showStatus("कॉन्ट्रैक्ट पॉज किया जा रहा है...", "success");
+                await tx.wait();
+                showStatus("कॉन्ट्रैक्ट सफलतापूर्वक पॉज हो गया!", "success");
+            } catch (error) {
+                showStatus("त्रुटि: " + error.message, "error");
+            }
+        }
+
+        async function unpauseContract() {
+            try {
+                const tx = await contract.unpause();
+                showStatus("कॉन्ट्रैक्ट अनपॉज किया जा रहा है...", "success");
+                await tx.wait();
+                showStatus("कॉन्ट्रैक्ट सफलतापूर्वक अनपॉज हो गया!", "success");
+            } catch (error) {
+                showStatus("त्रुटि: " + error.message, "error");
+            }
         }
 
         // स्टेटस मैसेज दिखाएं
@@ -732,95 +996,44 @@
             }, 5000);
         }
 
-        function showComingSoon() {
-            showStatus("यह फीचर जल्द ही उपलब्ध होगा। पहले बेसिक कनेक्शन टेस्ट करें।", "warning");
-        }
-
-        function resetUI() {
-            document.getElementById('connectBtn').textContent = 'वॉलेट कनेक्ट करें';
-            document.getElementById('connectBtn').className = 'btn btn-primary';
-            document.getElementById('connectBtn').disabled = false;
-            document.getElementById('walletAddress').textContent = 'कनेक्ट नहीं किया गया';
-            document.getElementById('networkInfo').textContent = 'अज्ञात';
+        // Enable/disable all buttons
+        function enableAllButtons(enable) {
+            const buttons = [
+                'loadStatsBtn', 'depositBtn', 'approveBtn', 'setMinUSDTBtn', 'setMaxAirdropBtn',
+                'setTotalCapBtn', 'setWithdrawDelayBtn', 'setReferralPercentsBtn', 'withdrawTokensBtn',
+                'requestWithdrawBtn', 'executeWithdrawBtn', 'withdrawBNBBtn', 'pauseBtn', 'unpauseBtn'
+            ];
             
-            // Disable all buttons
-            document.getElementById('testAllBtn').disabled = true;
-            document.getElementById('ownerBtn').disabled = true;
-            document.getElementById('pausedBtn').disabled = true;
-            document.getElementById('tokenBtn').disabled = true;
-            document.getElementById('loadStatsBtn').disabled = true;
-            
-            document.getElementById('testResults').innerHTML = '';
-            document.getElementById('lastError').textContent = 'कोई एरर नहीं';
-            showStatus("UI रीसेट हो गया। नया कनेक्शन try करें।", "success");
+            buttons.forEach(btnId => {
+                const btn = document.getElementById(btnId);
+                if (btn) btn.disabled = !enable;
+            });
         }
 
         // Event Listeners Setup
         function setupEventListeners() {
             document.getElementById('connectBtn').addEventListener('click', connectWallet);
-            document.getElementById('testAllBtn').addEventListener('click', testAllFunctions);
-            document.getElementById('ownerBtn').addEventListener('click', getOwner);
-            document.getElementById('pausedBtn').addEventListener('click', getPaused);
-            document.getElementById('tokenBtn').addEventListener('click', getTokenAddress);
             document.getElementById('loadStatsBtn').addEventListener('click', loadContractStats);
-            document.getElementById('resetBtn').addEventListener('click', resetUI);
-            document.getElementById('depositBtn').addEventListener('click', showComingSoon);
-            document.getElementById('withdrawBtn').addEventListener('click', showComingSoon);
-            document.getElementById('settingsBtn').addEventListener('click', showComingSoon);
-        }
-
-        // Auto connect on page load
-        async function autoConnect() {
-            console.log('Page loaded, checking for existing connection...');
-            if (window.ethereum) {
-                try {
-                    const accounts = await window.ethereum.request({ method: 'eth_accounts' });
-                    if (accounts.length > 0) {
-                        console.log('Auto-connecting wallet...');
-                        await connectWallet();
-                    }
-                } catch (error) {
-                    console.log('Auto-connect failed:', error);
-                }
-            }
-        }
-
-        // Network change listener
-        function setupNetworkListeners() {
-            if (window.ethereum) {
-                window.ethereum.on('chainChanged', (chainId) => {
-                    console.log('Network changed:', chainId);
-                    showStatus("नेटवर्क बदल गया है। पेज रीलोड हो रहा है...", "warning");
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 2000);
-                });
-
-                window.ethereum.on('accountsChanged', (accounts) => {
-                    console.log('Account changed:', accounts);
-                    showStatus("वॉलेट अकाउंट बदल गया है। पेज रीलोड हो रहा है...", "warning");
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 2000);
-                });
-            }
+            document.getElementById('approveBtn').addEventListener('click', approveTokens);
+            document.getElementById('depositBtn').addEventListener('click', depositTokens);
+            document.getElementById('setMinUSDTBtn').addEventListener('click', setMinUSDT);
+            document.getElementById('setMaxAirdropBtn').addEventListener('click', setMaxAirdropPerClaim);
+            document.getElementById('setTotalCapBtn').addEventListener('click', setTotalAirdropCap);
+            document.getElementById('setWithdrawDelayBtn').addEventListener('click', setWithdrawDelay);
+            document.getElementById('setReferralPercentsBtn').addEventListener('click', setReferralPercents);
+            document.getElementById('withdrawTokensBtn').addEventListener('click', withdrawTokens);
+            document.getElementById('requestWithdrawBtn').addEventListener('click', requestWithdrawAnyToken);
+            document.getElementById('executeWithdrawBtn').addEventListener('click', executeWithdrawAnyToken);
+            document.getElementById('withdrawBNBBtn').addEventListener('click', withdrawBNB);
+            document.getElementById('pauseBtn').addEventListener('click', pauseContract);
+            document.getElementById('unpauseBtn').addEventListener('click', unpauseContract);
         }
 
         // Initialize the application
         function initApp() {
             console.log('Initializing application...');
             setupEventListeners();
-            setupNetworkListeners();
-            
-            // Disable all buttons initially
-            document.getElementById('testAllBtn').disabled = true;
-            document.getElementById('ownerBtn').disabled = true;
-            document.getElementById('pausedBtn').disabled = true;
-            document.getElementById('tokenBtn').disabled = true;
-            document.getElementById('loadStatsBtn').disabled = true;
-            
-            // Try auto-connect
-            autoConnect();
+            enableAllButtons(false);
         }
 
         // Start the app when page loads
